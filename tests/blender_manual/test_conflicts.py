@@ -8,6 +8,7 @@ So far, the tests cannot really be automated on CI/CD since they require lengthy
 until all the messages are flushed and processed at the end before grabbing
 the messages from all Blender
 """
+
 from pathlib import Path
 import unittest
 import time

@@ -13,6 +13,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  prek:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.14
+      - run: pixi run lint
   hypothesis:
     name: ${{ matrix.backend }} ${{ matrix.blender }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}

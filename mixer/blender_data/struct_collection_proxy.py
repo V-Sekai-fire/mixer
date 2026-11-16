@@ -21,6 +21,7 @@ in datablock_collection_proxy.py
 
 See synchronization.md
 """
+
 from __future__ import annotations
 
 from collections import defaultdict

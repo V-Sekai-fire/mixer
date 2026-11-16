@@ -17,6 +17,7 @@
 """
 Proxies for bpy.types.NodeTree and bpy.types.NodeLinks
 """
+
 from __future__ import annotations
 
 import logging

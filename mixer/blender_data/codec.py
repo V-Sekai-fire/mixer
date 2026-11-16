@@ -20,6 +20,7 @@ Define the mapping between message types and message classes.
 
 Mostly used by tests to ease message decoding.
 """
+
 from mixer import codec
 from mixer.broadcaster.common import MessageType
 from mixer.blender_data import messages

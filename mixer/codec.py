@@ -18,6 +18,7 @@
 """
 Helper function fo encode and decode BLENDER_DATA_* messages
 """
+
 import dataclasses
 import importlib
 from typing import Dict

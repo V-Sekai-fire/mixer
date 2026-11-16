@@ -19,6 +19,7 @@ Proxy of a datablock
 
 See synchronization.md
 """
+
 from __future__ import annotations
 
 from collections import defaultdict

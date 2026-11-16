@@ -11,7 +11,7 @@ May 2021
 
 October 2020
 ------------
-- Brainy Man: `МУЛЬТИПЛЕЕР В BLENDER | Аддон Mixer от Ubisoft <https://www.youtube.com/watch?v=EvwSxwCjHUo>`_ 
+- Brainy Man: `МУЛЬТИПЛЕЕР В BLENDER | Аддон Mixer от Ubisoft <https://www.youtube.com/watch?v=EvwSxwCjHUo>`_
 
 September 2020
 --------------

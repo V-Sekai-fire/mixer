@@ -26,7 +26,7 @@ Will files saved by all participants contain the same data?
 Not exactly. Here is a non limiting list of situations that will cause Blender files saved by participants to differ:
 
 - Creating or updating data that is not synchronized: see the list of :ref:`synchronized data <synchronized>`
-- Simultaneous modifications of the same data by several users. 
+- Simultaneous modifications of the same data by several users.
 - Usage of media files: file paths will be different unless shared folders with the same base folder are used.
 - Extreme network latency
 
@@ -39,7 +39,7 @@ Mixer handles these simultaneous and conflicting modifications:
 - renaming datablocks with different names
 - linking different objects to the same collection
 
-The following conflicting modifications are not handled, and in these cases, the participants will end up with 
+The following conflicting modifications are not handled, and in these cases, the participants will end up with
 different attribute values:
 
 - setting an attribute with different values.
@@ -56,7 +56,7 @@ The limit will come from the response times that depend on the number of users, 
 Can I have a server running without executing Blender?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Yes. See :doc:`/advanced/standalone-server`. 
+Yes. See :doc:`/advanced/standalone-server`.
 
 Why is room join sometimes so long?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

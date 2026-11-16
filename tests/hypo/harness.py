@@ -1,4 +1,5 @@
 """Cross-platform (macOS, Linux, Windows) multi-client harness: one broadcaster server + N headless Blenders."""
+
 import json
 import os
 import shutil
@@ -69,14 +70,24 @@ class Client:
             (addons / "mixer").symlink_to(ROOT / "mixer", target_is_directory=True)
         except OSError:  # Windows without symlink privilege
             shutil.copytree(ROOT / "mixer", addons / "mixer")
-        env = dict(os.environ, BLENDER_USER_SCRIPTS=self.scripts, MIXER_NO_START_SERVER="1",
-                   MIXER_USER_PORT=str(server.port))
+        env = dict(
+            os.environ, BLENDER_USER_SCRIPTS=self.scripts, MIXER_NO_START_SERVER="1", MIXER_USER_PORT=str(server.port)
+        )
         if os.environ.get("MIXER_BACKEND") == "bpy":
             # Blender as a Python module (pip "bpy"), no Blender executable
             cmd = [sys.executable, str(WORKER), f"--port={self.port}"]
         else:
-            cmd = [blender_exe(), "-b", "--factory-startup", "--python-exit-code", "255", "--python", str(WORKER),
-                   "--", f"--port={self.port}"]
+            cmd = [
+                blender_exe(),
+                "-b",
+                "--factory-startup",
+                "--python-exit-code",
+                "255",
+                "--python",
+                str(WORKER),
+                "--",
+                f"--port={self.port}",
+            ]
         self.proc = subprocess.Popen(cmd, env=env)
         self.sock = self._connect(60)
         self.f = self.sock.makefile("rw", encoding="utf-8", newline="\n")

@@ -1,6 +1,7 @@
 """
 This module defines Blender handlers for Mixer in generic synchronization mode
 """
+
 from __future__ import annotations
 
 import logging

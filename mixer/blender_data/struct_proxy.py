@@ -20,6 +20,7 @@ Proxy of a bpy.types.Struct, excluding bpy.types.ID that is implemented in datab
 
 See synchronization.md
 """
+
 from __future__ import annotations
 
 from functools import lru_cache

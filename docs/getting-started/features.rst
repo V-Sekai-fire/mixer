@@ -6,7 +6,7 @@ Key Features
 Overview
 --------
 
-Mixer synchronizes in real time the modifications done to the scene and the objects it contains. During a collaboration session, Mixer displays the position of other participants and highlights their selections. 
+Mixer synchronizes in real time the modifications done to the scene and the objects it contains. During a collaboration session, Mixer displays the position of other participants and highlights their selections.
 See :ref:`work-together` for more details.
 
 .. image:: /img/select.png
@@ -17,7 +17,7 @@ In the sections bellow we listed the features of Blender that are synchronized a
 .. warning::
     **Undo / Redo is a important pitfall at the moment** for technical as well as paradigm reasons.
     It is strongly adviced **not to use it**, it may destabilize the running collaborative session.
-    
+
     See :ref:`caveats` for more details.
 
 .. _synchronized:
@@ -45,7 +45,7 @@ Curve           |P|                 Except surface and Bézier curves. See [Edit
 Grease pencil   |Y|                 See [GreasePencil]_, [Edit]_, [Convert]_
 Image           |P|                 See [Image]_, [Media]_
 Keying sets     |N|
-Library         |P|                 See [Library]_             
+Library         |P|                 See [Library]_
 Light           |Y|
 Light probe     |N|
 Line style      |N|
@@ -55,7 +55,7 @@ Mesh            |P|                 Except split normals, custom properties, see
 Metaball        |Y|                 See [Edit]_, [Convert]_
 Movie clip      |Y|                 See [Media]_
 Node group      |P|                 Not extensively tested, see [Nodes]_
-Object          |P|                 Except motion paths, particles and physics. See [Convert]_ 
+Object          |P|                 Except motion paths, particles and physics. See [Convert]_
 Paint curve     |N|
 Particles       |N|
 Shape key       |Y|
@@ -100,7 +100,7 @@ World           |Y|
     * the results of **make local** and **reload**
     * library overrides
 
-.. [Media] 
+.. [Media]
     Media files are synchronized. The result of **reload** or media path modification are not synchronized.
 
 .. [Nodes]
@@ -118,21 +118,21 @@ This is the case for most User Interface elements, user preferences and configur
 =====================  =====================================================
 UI and Settings          Comments
 =====================  =====================================================
-User preferences       
-Key mapping            
-Installed add-ons      
-Workspace              
+User preferences
+Key mapping
+Installed add-ons
+Workspace
 =====================  =====================================================
 
 =====================  =====================================================
 Scene Manipulation       Comments
 =====================  =====================================================
-Object Editing Mode     
+Object Editing Mode
 Active tool             Eg: Move, Rotate, Scale...
-3D cursor               
+3D cursor
 Scene display mode      Show gizmos, overlays...
-Viewport shading        
-Play mode               
+Viewport shading
+Play mode
 =====================  =====================================================
 
 =====================  =====================================================

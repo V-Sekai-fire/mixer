@@ -21,6 +21,7 @@ An elementary json encoder-decoder to transmit Proxy and Delta items.
 This module and the resulting encoding are by no way optimal. It is just a simple
 implementation that does the job.
 """
+
 from __future__ import annotations
 
 import base64

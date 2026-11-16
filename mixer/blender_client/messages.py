@@ -20,6 +20,7 @@ Definition of messages
 
 Currently used only in tests. Could be used also in all send_xxx() and build_xxx() functions
 """
+
 from dataclasses import dataclass
 
 from mixer.codec import Message, Color, Matrix

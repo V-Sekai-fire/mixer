@@ -227,9 +227,7 @@ for node in node_tree.nodes:
     node.select = False
 """
     # https://blenderartists.org/t/best-way-to-group-nodes/576043/4
-    create_group = (
-        override_context
-        + """
+    create_group = override_context + """
 import bpy
 node_tree = bpy.data.materials["mat0"].node_tree
 nodes = node_tree.nodes
@@ -238,7 +236,6 @@ nodes["RGB1"].select = True
 ctx = node_editor_context()
 bpy.ops.node.group_make(ctx)
 """
-    )
     add_input = """
 import bpy
 node_tree = bpy.data.node_groups[0]

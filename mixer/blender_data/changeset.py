@@ -17,6 +17,7 @@
 """
 Define class and types to hold the changes between the proxy state and the Blender state.
 """
+
 from __future__ import annotations
 
 from typing import List, Tuple
@@ -25,7 +26,6 @@ from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.blender_data.datablock_proxy import DatablockProxy
 from mixer.blender_data.proxy import DeltaUpdate, Uuid
-
 
 CreationChangeset = List[DatablockProxy]
 UpdateChangeset = List[DeltaUpdate]

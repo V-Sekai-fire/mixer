@@ -19,12 +19,12 @@ Simple types used by the addon and the tests.
 
 Must not include bpy
 """
+
 from __future__ import annotations
 
 import array
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Tuple, Union
-
 
 SoaMember = Tuple[str, array.array]
 """Member of a structure of array from a Blender array of structure like MeshVertices

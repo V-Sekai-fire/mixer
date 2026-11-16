@@ -18,7 +18,7 @@ Be aware that neither Ubisoft nor Ubisoft employees can be taken as responsible 
 
 **This said, we will do our best to improve Mixer thanks to your feedback in order to provide a memorable creative collaborative experience.
 Have fun !**
- 
+
 
 Getting started
 ---------------
@@ -90,4 +90,3 @@ In case you keep a server running without tying it to a Blender instance, you ca
    :caption: Community
 
    /community/on_youtube
-

@@ -53,7 +53,7 @@ MAX_BROADCAST_COMMAND_COUNT = 64
 
 
 class Connection:
-    """ Represent a connection with a client """
+    """Represent a connection with a client"""
 
     def __init__(self, server: Server, sock: Socket, address):
         self.socket: Socket = sock

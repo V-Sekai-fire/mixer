@@ -22,7 +22,6 @@ This module defines the Preference menu of VRtist.
 import bpy
 from bpy.types import Menu
 
-
 #############
 # Preferences
 #############

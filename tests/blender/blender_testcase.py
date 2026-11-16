@@ -1,12 +1,12 @@
 """
 Test case for the Full Blender protocol
 """
+
 import logging
 import sys
 
 from tests import files_folder
 from tests.mixer_testcase import BlenderDesc, MixerTestCase
-
 
 logging.basicConfig(stream=sys.stderr, level=logging.WARNING)
 logger = logging.getLogger(__name__)

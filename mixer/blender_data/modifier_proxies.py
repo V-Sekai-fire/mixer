@@ -19,6 +19,7 @@ Proxy classes for bpy_struct that ned a custom implementation
 
 See synchronization.md
 """
+
 from __future__ import annotations
 
 import logging
@@ -59,7 +60,7 @@ class NodesModifierProxy(StructProxy):
         super().__init__()
 
     def _load_inputs(self, modifier: T.bpy_struct) -> Dict[int, Any]:
-        """Returns a dict containing {input_index_in_node_group_inputs: value_in_nodes_modifier} """
+        """Returns a dict containing {input_index_in_node_group_inputs: value_in_nodes_modifier}"""
 
         input_names = set(modifier.keys()) - self._non_inputs
         node_group = modifier.node_group

@@ -59,4 +59,3 @@ The messages are received by the server that broadcasts them to the users that a
 ### Known restrictions
 
 - Undo redo is not supported and may break the synchronization
-

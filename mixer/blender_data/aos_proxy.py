@@ -20,6 +20,7 @@ Proxy for array of structures proxified as structure of arrays
 
 See synchronization.md
 """
+
 from __future__ import annotations
 
 import logging

@@ -4,6 +4,7 @@ usage: get_blender.py <X.Y | X.Y.Z> <dest>   (X.Y picks the newest patch release
 Old releases name their files differently (macOS.dmg, linux-glibc217-x86_64, windows64): the directory listing is
 matched, nothing is guessed.
 """
+
 import platform
 import re
 import shutil
@@ -26,7 +27,9 @@ BASES = [
     "https://mirror.clarkson.edu/blender/release/",
     "https://ftp.nluug.nl/pub/graphics/blender/release/",
 ]
-HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+}
 
 
 def fetch(url, timeout=60):
@@ -69,8 +72,11 @@ PATTERNS = {
 if system not in PATTERNS:
     raise SystemExit(f"unsupported OS {system}")
 files = re.findall(r'href="(blender-(\d+\.\d+(?:\.\d+)?)-([^"]+))"', listing)
-wanted = [(name, ver, rest) for name, ver, rest in files
-          if re.fullmatch(PATTERNS[system], rest, re.IGNORECASE) and (version.count(".") == 1 or ver == version)]
+wanted = [
+    (name, ver, rest)
+    for name, ver, rest in files
+    if re.fullmatch(PATTERNS[system], rest, re.IGNORECASE) and (version.count(".") == 1 or ver == version)
+]
 if not wanted:
     raise SystemExit(f"no {system} build of Blender {version} in {index}")
 
@@ -88,6 +94,7 @@ if system == "Darwin":
 name = wanted[0][0]
 archive = dest / name
 if not archive.exists():
+
     def download(b):
         with fetch(f"{b}Blender{series}/{name}", timeout=120) as r, open(archive, "wb") as f:
             shutil.copyfileobj(r, f)

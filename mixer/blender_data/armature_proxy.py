@@ -19,6 +19,7 @@ Proxy for Armature datablock.
 
 See synchronization.md
 """
+
 from __future__ import annotations
 
 import functools

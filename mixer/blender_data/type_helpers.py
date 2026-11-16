@@ -18,6 +18,7 @@
 """
 Type related utilities
 """
+
 import functools
 from typing import Any, List, Type
 
