@@ -25,7 +25,7 @@ import logging
 from typing import Any, Dict, Optional, TYPE_CHECKING, Tuple, Union
 
 import bpy
-import bpy.types as T  # noqa
+from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.blender_data.json_codec import serialize
 from mixer.blender_data.proxy import Delta, DeltaUpdate

@@ -21,7 +21,7 @@ Type related utilities
 import functools
 from typing import Any, List, Type
 
-import bpy.types as T  # noqa N812
+from mixer.blender_data.bl_compat import T  # noqa N812
 import mathutils
 
 vector_types = {mathutils.Vector, mathutils.Color, mathutils.Quaternion, mathutils.Euler}

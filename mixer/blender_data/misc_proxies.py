@@ -24,7 +24,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Optional, TYPE_CHECKING, List, Set, Tuple, Union
 
-import bpy.types as T  # noqa
+from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.blender_data.attributes import read_attribute, write_attribute
 from mixer.blender_data.datablock_ref_proxy import DatablockRefProxy

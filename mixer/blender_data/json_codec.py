@@ -23,6 +23,7 @@ implementation that does the job.
 """
 from __future__ import annotations
 
+import base64
 import json
 import logging
 from typing import Dict, Tuple, TYPE_CHECKING, Union
@@ -37,6 +38,8 @@ logger = logging.getLogger(__name__)
 
 
 MIXER_CLASS = "__mixer_class__"
+MIXER_BYTES = "__mixer_bytes__"
+"""JSON has no bytes: Blender 5 has bytes properties, carried as base64 under this key"""
 
 _registry: Dict[str, Tuple[type, Tuple[str]]] = {}
 """Proxy class registry
@@ -81,6 +84,8 @@ class DecodeError(Exception):
 
 def default(obj):
     # called top down
+    if isinstance(obj, (bytes, bytearray)):
+        return {MIXER_BYTES: base64.b64encode(bytes(obj)).decode("ascii")}
     class_ = obj.__class__
 
     is_known = class_.__name__ in _registry
@@ -104,6 +109,8 @@ def default(obj):
 
 
 def decode_hook(x):
+    if MIXER_BYTES in x:
+        return base64.b64decode(x[MIXER_BYTES])
     class_name = x.get(MIXER_CLASS)
     class_, ctor_arg_names = _registry.get(class_name, (None, None))
     if class_ is None:

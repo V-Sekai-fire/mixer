@@ -42,10 +42,16 @@ def delete_scene(scene) -> bool:
                 if area.type == "VIEW_3D":
                     return window
 
-    ctx = {"window": window(), "scene": scene}
     logger.info(f"deleting scene {scene} ...")
     try:
-        bpy.ops.scene.delete(ctx)
+        win = window()
+        if win is None:
+            # no window (background mode, timers): the operator needs one, the data API does not
+            bpy.data.scenes.remove(scene)
+        else:
+            # context override dicts were removed in Blender 4.0
+            with bpy.context.temp_override(window=win, scene=scene):
+                bpy.ops.scene.delete()
         logger.info(f"... OK. Remaining scenes: {bpy.data.scenes.keys()}")
         return True
     except RuntimeError as e:

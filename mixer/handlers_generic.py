@@ -7,7 +7,7 @@ import logging
 from typing import Set, Tuple
 
 import bpy
-import bpy.types as T  # noqa N812
+from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.blender_client import data as data_api
 from mixer.blender_data.diff import BpyBlendDiff
@@ -25,7 +25,7 @@ def extra_updates(updates: Set[T.ID]) -> Set[T.ID]:
         if hasattr(datablock, "shape_keys") and isinstance(datablock.shape_keys, T.Key):
             # in some cases (TestShapeKey.test_rename_key), the Key update is missing. Always check for shape_keys
             extra_updates.add(datablock.shape_keys)
-        if isinstance(datablock, T.Scene) and datablock.grease_pencil is not None:
+        if isinstance(datablock, T.Scene) and getattr(datablock, "grease_pencil", None) is not None:
             # scene annotation change do not trigger a DG update
             extra_updates.add(datablock.grease_pencil)
 

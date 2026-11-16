@@ -1,5 +1,22 @@
 # 1.1.0 (WIP)
 
+## Blender 5 port: frontier record
+
+Levels are classes of two-client sync problems (`pixi run frontier`, `tests/hypo/test_frontier.py`); a problem is one
+Hypothesis example; regret is 1[s>=1] - s/n. A change stays only when its level's rate rises and no lower level drops.
+
+- Baseline (macOS, Blender 5.3, 8 problems per level): levels 1 to 8 (create A to B, B to A, delete, create after
+  delete, two creators in turn, two creators back to back, move, control outside the room) all 8/8, regret 0.
+- Kept: `ensure_uuid` reads `item.mixer_uuid`. Blender 5 keeps `bpy.props` values in `system_properties`, so
+  `item.get("mixer_uuid")` was always None and every operator gave the scene a new uuid. Levels 3 and 4 went from
+  0/n to 8/8 (create after delete never reached B before).
+- Kept: the worker keeps accepting connections until "quit" (a reset probe ended it on Windows, CI bpy job).
+- Kept: `bytes` properties travel as base64 in the JSON codec.
+- Not measured: undo, renames, materials and node trees, grease pencil, VRM 1.0. A level with no problems is
+  unmeasured, and 8/8 covers only the problems written so far.
+- Open: level 6 failed intermittently on macOS before the uuid fix settled (B then A creating); it passed 64 of 64
+  problems and 5 of 5 seeds since. Rare or fixed is not decided; macOS CI is the next measurement.
+
 ## Documentation
 
 - Fix README.md (thanks @XenioxYT, @b4zz4)

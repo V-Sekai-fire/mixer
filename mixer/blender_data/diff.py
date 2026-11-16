@@ -29,7 +29,7 @@ import logging
 from typing import List, Dict, Tuple, TYPE_CHECKING
 
 import bpy
-import bpy.types as T  # noqa
+from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.blender_data.datablock_proxy import DatablockProxy
 from mixer.blender_data.filter import SynchronizedProperties, skip_bpy_data_item

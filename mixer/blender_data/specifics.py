@@ -36,7 +36,7 @@ from mixer.blender_data.proxy import AddElementFailed, ExternalFileFailed
 
 
 import bpy
-import bpy.types as T  # noqa N812
+from mixer.blender_data.bl_compat import is_available, T  # noqa N812
 import bpy.path
 import mathutils
 
@@ -53,33 +53,26 @@ logger = logging.getLogger(__name__)
 @lru_cache(None)
 def soable_collection_properties():
     return {
-        T.GPencilStroke.bl_rna.properties["points"],
-        T.GPencilStroke.bl_rna.properties["triangles"],
         T.Mesh.bl_rna.properties["edges"],
         T.Mesh.bl_rna.properties["loops"],
         T.Mesh.bl_rna.properties["loop_triangles"],
         T.Mesh.bl_rna.properties["polygons"],
         T.Mesh.bl_rna.properties["vertices"],
-        T.MeshFaceMapLayer.bl_rna.properties["data"],
         T.MeshLoopColorLayer.bl_rna.properties["data"],
         T.MeshUVLoopLayer.bl_rna.properties["data"],
         T.ShapeKey.bl_rna.properties["data"],
         T.Spline.bl_rna.properties["bezier_points"],
+    } | {
+        t.bl_rna.properties[name]
+        for t, name in ((T.GPencilStroke, "points"), (T.GPencilStroke, "triangles"), (T.MeshFaceMapLayer, "data"))
+        if is_available(t)
     }
 
 
 @lru_cache(None)
 def _resize_geometry_types():
-    return tuple(
-        type(t.bl_rna)
-        for t in [
-            T.MeshEdges,
-            T.MeshLoops,
-            T.MeshLoopTriangles,
-            T.MeshPolygons,
-            T.MeshVertices,
-        ]
-    )
+    # Since Blender 5 type(X.bl_rna) is bpy.types.Struct for every X: use RNA identifiers
+    return {"MeshEdges", "MeshLoops", "MeshLoopTriangles", "MeshPolygons", "MeshVertices"}
 
 
 # in sync with soa_initializers
@@ -833,7 +826,7 @@ def fit_aos(target: T.bpy_prop_collection, proxy: AosProxy, context: Context):
         return
 
     target_rna = target.bl_rna
-    if isinstance(target_rna, _resize_geometry_types()):
+    if target_rna.identifier in _resize_geometry_types():
         existing_length = len(target)
         incoming_length = len(proxy)
         if existing_length != incoming_length:
@@ -845,7 +838,7 @@ def fit_aos(target: T.bpy_prop_collection, proxy: AosProxy, context: Context):
             target.add(incoming_length)
         return
 
-    if isinstance(target_rna, type(T.GPencilStrokePoints.bl_rna)):
+    if target_rna.identifier == "GPencilStrokePoints":
         existing_length = len(target)
         incoming_length = proxy.length
         delta = incoming_length - existing_length
@@ -857,7 +850,7 @@ def fit_aos(target: T.bpy_prop_collection, proxy: AosProxy, context: Context):
                 delta += 1
         return
 
-    if isinstance(target_rna, type(T.SplineBezierPoints.bl_rna)):
+    if target_rna.identifier == "SplineBezierPoints":
         existing_length = len(target)
         incoming_length = len(proxy)
         delta = incoming_length - existing_length

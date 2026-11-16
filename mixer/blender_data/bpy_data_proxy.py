@@ -31,7 +31,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TYPE_CHECKIN
 import pathlib
 
 import bpy
-import bpy.types as T  # noqa
+from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.blender_data.bpy_data import collections_names
 from mixer.blender_data.changeset import Changeset, RenameChangeset

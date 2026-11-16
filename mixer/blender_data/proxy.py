@@ -28,7 +28,7 @@ from typing import Any, Callable, Dict, List, Optional, Iterable, Tuple, TYPE_CH
 from uuid import uuid4
 
 import bpy
-import bpy.types as T  # noqa
+from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.blender_data.json_codec import serialize
 
@@ -273,7 +273,9 @@ class Proxy:
 
 def ensure_uuid(item: bpy.types.ID) -> str:
     """Ensures that the item datablock has a mixer_uuid property"""
-    uuid = item.get("mixer_uuid")
+    # Read the RNA property. Since Blender 5 a property defined with bpy.props lives in system_properties, so
+    # item.get("mixer_uuid") is always None there and every call would mint a new uuid.
+    uuid = item.mixer_uuid
     if not uuid:
         uuid = str(uuid4())
         item.mixer_uuid = uuid

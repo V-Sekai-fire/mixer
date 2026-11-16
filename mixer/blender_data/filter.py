@@ -30,7 +30,7 @@ import logging
 import sys
 from typing import Any, Dict, ItemsView, Iterable, List, Optional, Set, Union
 
-from bpy import types as T  # noqa
+from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.blender_data.type_helpers import is_pointer_to
 from mixer.blender_data.bpy_data import collections_names
@@ -154,7 +154,8 @@ class FilterStack:
     def apply(self, bl_rna: T.bpy_struct) -> List[T.Property]:
         properties = list(bl_rna.properties)
         for class_ in bases(bl_rna):
-            bl_rna = None if class_ is None else class_.bl_rna
+            # bases() already yields RNA structs; in Blender 5 struct.bl_rna is the generic 'Struct', not the struct itself
+            bl_rna = class_
             for filter_set in self._filter_stack():
                 filters = filter_set.get(bl_rna, [])
                 for filter_ in filters:
@@ -201,7 +202,8 @@ class SynchronizedProperties:
     def _sort(self, bl_rna, properties: List[T.Property]):
 
         for class_ in bases(bl_rna):
-            bl_rna = None if class_ is None else class_.bl_rna
+            # bases() already yields RNA structs; in Blender 5 struct.bl_rna is the generic 'Struct', not the struct itself
+            bl_rna = class_
             ordered_identifiers = self._order().get(bl_rna)
             if ordered_identifiers is not None:
                 break

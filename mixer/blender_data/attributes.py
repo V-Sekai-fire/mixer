@@ -22,7 +22,7 @@ import traceback
 from typing import Any, Optional, Union, TYPE_CHECKING
 
 import bpy
-import bpy.types as T  # noqa
+from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.blender_data.proxy import Delta, DeltaUpdate, Proxy
 from mixer.blender_data.specifics import is_soable_collection
@@ -81,9 +81,8 @@ def read_attribute(attr: Any, key: Union[int, str], attr_property: T.Property, p
 
         attr_type = type(attr)
         if attr_type == T.bpy_prop_collection:
-            if hasattr(attr, "bl_rna") and isinstance(
-                attr.bl_rna, (type(T.CollectionObjects.bl_rna), type(T.CollectionChildren.bl_rna))
-            ):
+            # Since Blender 5 type(X.bl_rna) is bpy.types.Struct for every X, so compare identifiers
+            if getattr(getattr(attr, "bl_rna", None), "identifier", None) in ("CollectionObjects", "CollectionChildren"):
                 from mixer.blender_data.datablock_collection_proxy import DatablockRefCollectionProxy
 
                 return DatablockRefCollectionProxy().load(attr, context)
