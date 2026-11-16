@@ -1,6 +1,7 @@
 """
 Base class for test cases
 """
+
 import array
 from dataclasses import dataclass
 import json

@@ -18,6 +18,7 @@
 """
 Define and register encodable/decodable message types
 """
+
 from mixer import codec
 from mixer.broadcaster.common import MessageType
 from mixer.blender_client import messages

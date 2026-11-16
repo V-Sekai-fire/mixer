@@ -9,6 +9,7 @@ Three kinds of checks, all driven by Hypothesis:
 
 Waits are condition based (poll until converged or timeout), never fixed sleeps.
 """
+
 import atexit
 
 from hypothesis import HealthCheck, Phase, example, given, settings, strategies as st

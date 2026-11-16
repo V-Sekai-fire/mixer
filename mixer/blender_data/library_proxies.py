@@ -19,6 +19,7 @@ Proxy classes for library-related items, i.e. libraries and link datablocks
 
 See synchronization.md
 """
+
 from __future__ import annotations
 
 import logging
@@ -31,7 +32,6 @@ from mixer.blender_data.bl_compat import T  # noqa N812
 from mixer.blender_data.proxy import Delta, DeltaUpdate, ExternalFileFailed
 from mixer.blender_data.datablock_proxy import DatablockProxy
 from mixer.blender_data.json_codec import serialize
-
 
 if TYPE_CHECKING:
     from mixer.blender_data.proxy import Context, Uuid
@@ -214,7 +214,6 @@ class LibraryProxy(DatablockProxy):
         context: Context,
         to_blender: bool = True,
     ):
-
         """
         Apply delta to an attribute with None value.
 

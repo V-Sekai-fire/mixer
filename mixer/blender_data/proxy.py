@@ -19,6 +19,7 @@ Base class and utilities for the proxy system.
 
 See synchronization.md
 """
+
 from __future__ import annotations
 
 from collections import defaultdict

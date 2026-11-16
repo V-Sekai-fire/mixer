@@ -402,9 +402,9 @@ class ShareData:
         sanitized = {}
         for _key, value in id_dict.items():
             try:
-                sanitized[
-                    value.name_full
-                ] = value  # the access value.name_full should trigger the error if the ID is invalid
+                sanitized[value.name_full] = (
+                    value  # the access value.name_full should trigger the error if the ID is invalid
+                )
             except ReferenceError as e:
                 logger.error(f"{e!r}")
         return sanitized

@@ -18,6 +18,7 @@
 """
 Send BLENDER_DATA messages, receive and process them
 """
+
 from __future__ import annotations
 
 import itertools

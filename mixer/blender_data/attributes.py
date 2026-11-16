@@ -82,7 +82,10 @@ def read_attribute(attr: Any, key: Union[int, str], attr_property: T.Property, p
         attr_type = type(attr)
         if attr_type == T.bpy_prop_collection:
             # Since Blender 5 type(X.bl_rna) is bpy.types.Struct for every X, so compare identifiers
-            if getattr(getattr(attr, "bl_rna", None), "identifier", None) in ("CollectionObjects", "CollectionChildren"):
+            if getattr(getattr(attr, "bl_rna", None), "identifier", None) in (
+                "CollectionObjects",
+                "CollectionChildren",
+            ):
                 from mixer.blender_data.datablock_collection_proxy import DatablockRefCollectionProxy
 
                 return DatablockRefCollectionProxy().load(attr, context)

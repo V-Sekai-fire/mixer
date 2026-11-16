@@ -31,7 +31,7 @@ This launches a :term:`Mixer server<server>` in the background. After the server
 .. image:: /img/create-room-localhost.png
    :align: center
 
-Now click on **Create Room** to create a :term:`room`. 
+Now click on **Create Room** to create a :term:`room`.
 After the room is created, the **Server rooms** section of the Mixer panel displays the room name, which is *Local* in
 the picture below.
 
@@ -57,7 +57,7 @@ This connects Mixer to the server we have just setup before. The **Server Rooms*
 
     Joining a room wipes out your current data and replaces it with the data from the Mixer server.
 
-Click on **Join room**. Both Blender are now connected to the server and their data is synchronized. 
+Click on **Join room**. Both Blender are now connected to the server and their data is synchronized.
 Creating or moving an object in one Blender updates the object in the other Blender.
 
 Read more about Mixer :ref:`features <features>` and try by yourself.

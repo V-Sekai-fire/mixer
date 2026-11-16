@@ -6,11 +6,11 @@
 
 ## Versions
 
-Blender version: 
+Blender version:
 
-Mixer version: 
+Mixer version:
 
-Operating systems: 
+Operating systems:
 
 ## Steps to reproduce
 

@@ -22,7 +22,6 @@ This module defines the Preference menu.
 import bpy
 from bpy.types import Menu
 
-
 #############
 # Preferences
 #############
@@ -39,9 +38,9 @@ class MIXER_MT_prefs_main_menu(Menu):  # noqa 801
         row.operator("preferences.addon_show", text="Add-on Preferences...").module = "mixer"
 
         row = layout.row(align=True)
-        row.operator(
-            "mixer.open_documentation_url", text="Documentation"
-        ).path = "https://ubisoft-mixer.readthedocs.io/en/latest/"
+        row.operator("mixer.open_documentation_url", text="Documentation").path = (
+            "https://ubisoft-mixer.readthedocs.io/en/latest/"
+        )
 
         row = layout.row(align=True)
         row.operator("mixer.about", text="About...")

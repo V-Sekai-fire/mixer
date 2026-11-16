@@ -24,7 +24,6 @@ from bpy import data as D  # noqa
 from bpy import types as T  # noqa
 from mixer.blender_data.filter import test_properties
 
-
 this_folder = Path(__file__).parent
 test_blend_file = str(this_folder / "test_data.blend")
 

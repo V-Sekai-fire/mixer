@@ -6,6 +6,7 @@
 Plain Python, no bpy. `usage` exits 1 when the add-on references a bpy.types / bpy.data name that a snapshot lacks and
 mixer/blender_data/bl_compat.py does not account for.
 """
+
 import gzip
 import json
 import re
@@ -94,7 +95,9 @@ def main(argv):
     global ALL_COLLECTIONS_EVER
     if len(argv) >= 3 and argv[0] == "diff":
         d = diff(load(argv[1]), load(argv[2]))
-        print(f"types removed {len(d['removed'])}, added {len(d['added'])}, structs with property changes {len(d['props'])}")
+        print(
+            f"types removed {len(d['removed'])}, added {len(d['added'])}, structs with property changes {len(d['props'])}"
+        )
         print("bpy.data collections removed:", d["bpy_data_removed"], "added:", d["bpy_data_added"])
         for name in d["removed"]:
             print("  - type", name)

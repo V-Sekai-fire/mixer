@@ -17,6 +17,7 @@
 """
 Script executed on the Blender command line to execute blender_data tests.
 """
+
 import os
 from pathlib import Path
 import unittest

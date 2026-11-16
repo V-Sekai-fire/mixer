@@ -1,0 +1,17 @@
+# Run with: pixi run lint   (prek is a drop-in pre-commit; builtin hooks need no network)
+repos:
+  - repo: builtin
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+  - repo: local
+    hooks:
+      - id: black
+        name: black (line length 120, from pyproject.toml)
+        entry: black
+        language: system
+        types: [python]

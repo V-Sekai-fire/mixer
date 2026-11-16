@@ -17,6 +17,7 @@
 """
 An addon for development and test of the generic proxy mechanism
 """
+
 import bpy
 import logging
 import os
@@ -82,7 +83,7 @@ class BuildProxyOperator(bpy.types.Operator):
 
 
 class DiffProxyOperator(bpy.types.Operator):
-    """Diff proxy """
+    """Diff proxy"""
 
     bl_idname = "mixer.diff_proxy"
     bl_label = "Mixer diff proxy"

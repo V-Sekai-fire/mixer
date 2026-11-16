@@ -36,7 +36,6 @@ from mixer.blender_client.client import SendSceneContentFailed, BlenderClient
 from mixer.handlers import HandlerManager
 from mixer.os_utils import addon_infos, tech_infos
 
-
 logger = logging.getLogger(__name__)
 
 

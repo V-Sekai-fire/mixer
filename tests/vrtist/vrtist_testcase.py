@@ -1,6 +1,7 @@
 """
 Test case for the VRTist protocol
 """
+
 import logging
 import sys
 

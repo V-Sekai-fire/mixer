@@ -1,7 +1,7 @@
 Work Together
 =====================
 
-    
+
 .. _work-together-page:
 
 After you are connected to a Mixer server, you can create or join a room in order to collaborate with other users. The instructions of this section apply to any type of network connection.
@@ -11,7 +11,7 @@ After you are connected to a Mixer server, you can create or join a room in orde
 Create a room
 -------------
 
-.. Warning:: 
+.. Warning::
     All the other users must use the same version of Blender and Mixer as the room creator.
 
 To create a room after you are connected to a server, type a name in the **Room** text box (``Local`` in the picture below), then click on **Create room**.
@@ -19,7 +19,7 @@ To create a room after you are connected to a server, type a name in the **Room*
 .. image:: /img/create-room-localhost.png
    :align: center
 
-.. Note:: 
+.. Note::
     Creating a room uploads the the contents of your current Blender data to the server, which can take up to several minutes.
 
 After the data has been uploaded, the Mixer panel lists the room in the **Server Rooms** list and others can join the room.

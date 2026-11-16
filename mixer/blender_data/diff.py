@@ -23,6 +23,7 @@ and its functionality should move into BpyDataProxy
 
 See synchronization.md
 """
+
 from __future__ import annotations
 
 import logging

@@ -27,5 +27,3 @@ To start a standalone server:
 :ref:`Find the IP address <ip-address>` of the machine that executes the server and communicate it to all the participants.
 
 All the participants :ref:`connect <connect>` to the server, one of them :ref:`creates a room <create-room>` and the others :ref:`join the room <join-room>`.
-
-

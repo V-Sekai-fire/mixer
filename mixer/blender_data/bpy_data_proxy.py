@@ -20,6 +20,7 @@ of bpy.data.
 
 See synchronization.md
 """
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -284,7 +285,7 @@ _updates_order = {
     # before Object. Object.bones update require Armature bones to be updated first
     T.Armature: 12,
     # Before Scene since LayerCollection.children are available when the collection is created
-    T.Collection: 15
+    T.Collection: 15,
     # anything else last
 }
 

@@ -13,6 +13,7 @@ Result file:            frontier-results.json (read by the CHANGELOG entry, not 
 Problems never raise: a failure is recorded with its reason so the whole table is measured in one run.
 The last test fails when any level is below n/n, so CI is red until every level is mastered.
 """
+
 import json
 import os
 from collections import OrderedDict

@@ -22,6 +22,7 @@ This is used for so called soable types, like MeshVertices (array of MeshVertex)
 
 See synchronization.md
 """
+
 from __future__ import annotations
 
 import array
@@ -205,7 +206,6 @@ class SoaElement(Proxy):
         context: Context,
         to_blender=True,
     ) -> SoaElement:
-
         """
         Apply delta to this proxy and optionally to the Blender attribute its manages.
 

@@ -3,6 +3,7 @@
 Run inside Blender:  blender -b --factory-startup --python tools/rna_schema.py -- out.json
 No add-on code is imported: the snapshot describes Blender, not Mixer.
 """
+
 import json
 import os
 import sys
@@ -52,5 +53,5 @@ def main(out):
     print(f"rna_schema: {bpy.app.version_string}: {len(structs)} structs -> {out}")
 
 
-argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
 main(argv[0] if argv else "rna_schema.json")

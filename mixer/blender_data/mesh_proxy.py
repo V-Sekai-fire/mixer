@@ -19,6 +19,7 @@ Proxy for Mesh datablock
 
 See synchronization.md
 """
+
 from __future__ import annotations
 
 import array
@@ -82,7 +83,7 @@ def update_requires_clear_geometry(incoming_update: MeshProxy, existing_proxy: M
 
 
 class VertexGroups:
-    """Utility class to hold vertex groups data in a handy way for MeshProxy, ObjectProxy and serialization """
+    """Utility class to hold vertex groups data in a handy way for MeshProxy, ObjectProxy and serialization"""
 
     def __init__(self, indices: Dict[int, array.array] = None, weights: Dict[int, array.array] = None) -> None:
         self.indices = indices if indices is not None else {}

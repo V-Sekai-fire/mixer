@@ -8,6 +8,8 @@ python = "3.13.*"
 cryptography = "*"
 hypothesis = ">=6.100"
 pytest = "*"
+prek = "*"
+black = "*"
 
 [pypi-dependencies]
 # HTTP/3 + WebTransport (BSD-3-Clause). The only network protocol Mixer speaks.
@@ -16,6 +18,7 @@ aioquic = ">=1.2"
 [tasks]
 # Hypothesis is the only test framework; pytest is merely the runner Hypothesis ships a plugin for.
 test = "python -m pytest tests/hypo -p no:cacheprovider -x -q"
+lint = "prek run --all-files"
 frontier = "python -m pytest tests/hypo/test_frontier.py -p no:cacheprovider -q -s"
 
 # Blender as the `bpy` PyPI module (needs Python 3.13): a separate backend/platform from the Blender executable,

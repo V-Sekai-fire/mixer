@@ -22,6 +22,7 @@ This module addresses the lower level encoding/decoding (from/to the wire), usin
 shared with the VRtist protocol.
 
 """
+
 from __future__ import annotations
 
 import json

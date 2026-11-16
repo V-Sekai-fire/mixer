@@ -19,6 +19,7 @@ Proxies for collections of datablock (e.g. bpy.data.objects) or datablock refere
 
 See synchronization.md
 """
+
 from __future__ import annotations
 
 import logging

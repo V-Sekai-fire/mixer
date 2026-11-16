@@ -5,6 +5,7 @@ Listens on 127.0.0.1:N for newline-delimited JSON requests, replies with one JSO
 Works headless on macOS, Linux and Windows: bpy.app.timers do not fire in background mode,
 so the worker pumps Mixer's network consumer and the depsgraph itself.
 """
+
 import json
 import socket
 import sys
@@ -52,8 +53,15 @@ def handle(req):
         return "ok"
     if op == "empty_scene":
         # Gall's law: start from the simplest scene, grow the synchronized content test by test
-        for coll in (bpy.data.objects, bpy.data.meshes, bpy.data.materials, bpy.data.lights, bpy.data.cameras,
-                     bpy.data.worlds, bpy.data.collections):
+        for coll in (
+            bpy.data.objects,
+            bpy.data.meshes,
+            bpy.data.materials,
+            bpy.data.lights,
+            bpy.data.cameras,
+            bpy.data.worlds,
+            bpy.data.collections,
+        ):
             for item in list(coll):
                 coll.remove(item)
         return "ok"

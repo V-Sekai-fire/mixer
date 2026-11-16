@@ -165,7 +165,9 @@ class _Protocol(QuicConnectionProtocol):
         return await asyncio.wait_for(self._wt_ready, 10)
 
 
-async def serve_wt(host: str, port: int, certificate: str, private_key: str, on_session: Callable[[Session], Awaitable[None]]):
+async def serve_wt(
+    host: str, port: int, certificate: str, private_key: str, on_session: Callable[[Session], Awaitable[None]]
+):
     """Start a WebTransport server. `on_session` runs once per accepted client session."""
     config = QuicConfiguration(is_client=False, alpn_protocols=ALPN, max_datagram_frame_size=65536)
     config.load_cert_chain(certificate, private_key)
