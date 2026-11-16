@@ -76,12 +76,35 @@ jobs:
           name: schema-${{ matrix.blender }}
           path: schemas/${{ matrix.blender }}.json.gz
 
+  schema-release:
+    name: publish the snapshots as a release
+    needs: schema
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: schema-*
+          path: schemas
+          merge-multiple: true
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Go pseudo-version: v0.0.0-<UTC commit time>-<12 hex of the commit>
+          tag="v0.0.0-$(TZ=UTC git show -s --format=%cd --date=format:%Y%m%d%H%M%S HEAD)-$(git rev-parse --short=12 HEAD)"
+          gh release create "$tag" schemas/*.json.gz --title "RNA schema snapshots ($tag)" --notes "Weekly refresh"
+
   schema-usage:
     name: add-on names exist in every Blender
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # offline: the snapshots are committed in schemas/, no Blender is downloaded
+      # no Blender is downloaded: the snapshots come from the newest release, whose tag is a Go pseudo-version
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download --pattern '*.json.gz' --dir schemas
       - run: python tools/rna_diff.py usage mixer schemas/*.json.gz
       # planted control: a name no Blender has must make the gate fail, else the gate proves nothing
       - name: gate fails on a planted unknown name
