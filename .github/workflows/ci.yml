@@ -4,7 +4,9 @@ on:
   push:
     branches: [master]
   pull_request:
-  merge_group:  # the merge queue builds the combined result once, here
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"  # weekly: Blender changes without our pushes
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -44,3 +46,49 @@ jobs:
       - name: Hypothesis tests (server + two Blender clients), bpy backend
         if: matrix.backend == 'bpy'
         run: pixi run -e bpy test-bpy
+
+  # What the add-on uses against every supported Blender, without running the add-on: dump the RNA schema of each
+  # version, then fail if bpy.types/bpy.data names used directly are absent from any of them.
+  schema:
+    name: RNA schema ${{ matrix.blender }}
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        blender: ["2.91", "2.93", "3.0", "3.3", "3.6", "4.0", "4.2", "4.5", "5.0", "5.1", "5.2", "5.3"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: sudo apt-get update && sudo -S -p '' apt-get install -y libxi6 libxkbcommon0 libgl1 libxxf86vm1 libxfixes3 libxrender1 libsm6 libegl1
+      - name: Dump the schema
+        run: |
+          exe=$(python tests/hypo/get_blender.py ${{ matrix.blender }} "$RUNNER_TEMP/blender" | tail -1)
+          "$exe" -b --factory-startup --python tools/rna_schema.py -- schemas/${{ matrix.blender }}.json
+          # Blender exits 0 when a --python script fails: the file is the proof
+          test -s schemas/${{ matrix.blender }}.json
+      - run: gzip schemas/${{ matrix.blender }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: schema-${{ matrix.blender }}
+          path: schemas/${{ matrix.blender }}.json.gz
+
+  schema-usage:
+    name: add-on names exist in every Blender
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # offline: the snapshots are committed in schemas/, no Blender is downloaded
+      - run: python tools/rna_diff.py usage mixer schemas/*.json.gz
+      # planted control: a name no Blender has must make the gate fail, else the gate proves nothing
+      - name: gate fails on a planted unknown name
+        run: |
+          rm -rf "$RUNNER_TEMP/planted" && cp -r mixer "$RUNNER_TEMP/planted"
+          printf 'import bpy\nbpy.types.NoSuchRnaTypeXyz\n' > "$RUNNER_TEMP/planted/zz_planted.py"
+          if python tools/rna_diff.py usage "$RUNNER_TEMP/planted" schemas/*.json.gz > "$RUNNER_TEMP/planted.out"; then
+            echo "planted name was not caught"; exit 1
+          fi
+          grep -q "BREAK bpy.types.NoSuchRnaTypeXyz" "$RUNNER_TEMP/planted.out"
