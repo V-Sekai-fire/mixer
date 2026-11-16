@@ -26,7 +26,7 @@ from functools import lru_cache
 import logging
 from typing import Optional, Tuple, TYPE_CHECKING, Union
 
-import bpy.types as T  # noqa
+from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.blender_data import specifics
 from mixer.blender_data.attributes import apply_attribute, diff_attribute, read_attribute, write_attribute

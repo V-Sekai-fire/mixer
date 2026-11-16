@@ -24,7 +24,7 @@ from __future__ import annotations
 import logging
 from typing import Optional, TYPE_CHECKING, Union
 
-import bpy.types as T  # noqa
+from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.blender_data.attributes import read_attribute
 from mixer.blender_data.bpy_data import rna_identifier_to_collection_name
@@ -81,7 +81,7 @@ class DatablockRefProxy(Proxy):
         # see HACK in target()
         # Base type closest to ID (e.g. Light for Point)
         type_ = bases_of(type(datablock).bl_rna)[-2]
-        type_name = type_.bl_rna.identifier
+        type_name = type_.identifier  # bases_of() yields RNA structs, whose .bl_rna is the generic Struct
         self._bpy_data_collection = rna_identifier_to_collection_name()[type_name]
         self._initial_name = datablock.name
 

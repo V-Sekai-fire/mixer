@@ -25,7 +25,7 @@ from __future__ import annotations
 import logging
 from typing import Dict, Iterable, Optional, Union, TYPE_CHECKING
 
-import bpy.types as T  # noqa
+from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.blender_data import specifics
 from mixer.blender_data.json_codec import serialize

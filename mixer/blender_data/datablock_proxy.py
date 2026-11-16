@@ -27,7 +27,7 @@ from typing import Dict, List, Optional, Tuple, TYPE_CHECKING, Union
 import pathlib
 
 import bpy
-import bpy.types as T  # noqa
+from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.blender_data import specifics
 from mixer.blender_data.bpy_data import rna_identifier_to_collection_name

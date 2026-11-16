@@ -26,7 +26,7 @@ from collections import defaultdict
 import logging
 from typing import Dict, Optional, Tuple, TYPE_CHECKING, Union
 
-import bpy.types as T  # noqa
+from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.blender_data import specifics
 from mixer.blender_data.attributes import apply_attribute, diff_attribute

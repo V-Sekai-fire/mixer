@@ -28,7 +28,7 @@ from uuid import uuid4
 from mixer.blender_data.bpy_data_proxy import BpyDataProxy
 
 import bpy
-import bpy.types as T  # noqa N812
+from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.shot_manager_data import ShotManager
 

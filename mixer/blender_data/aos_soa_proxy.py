@@ -29,7 +29,7 @@ import logging
 from typing import List, Dict, Optional, Tuple, TYPE_CHECKING
 
 import bpy
-import bpy.types as T  # noqa
+from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.blender_data.attributes import read_attribute, write_attribute
 from mixer.blender_data.json_codec import serialize

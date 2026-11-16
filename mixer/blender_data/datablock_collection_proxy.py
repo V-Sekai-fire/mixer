@@ -26,7 +26,7 @@ import traceback
 from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING, Union
 
 import bpy
-import bpy.types as T  # noqa
+from mixer.blender_data.bl_compat import T  # noqa N812
 
 from mixer.blender_data import specifics
 from mixer.blender_data.attributes import diff_attribute, read_attribute, write_attribute
