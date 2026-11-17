@@ -52,6 +52,10 @@ Documentation is available at the web site https://ubisoft-mixer.readthedocs.io/
 - [test](https://ubisoft-mixer.readthedocs.io/en/latest/getting-started/first-steps.html) locally,
 - then [get connected](https://ubisoft-mixer.readthedocs.io/en/latest/collaborate/get-connected.html) and [work together](https://ubisoft-mixer.readthedocs.io/en/latest/collaborate/work-together.html)
 
+## Broadcaster
+
+The broadcaster now lives in [mixer-broadcaster](https://github.com/V-Sekai-fire/mixer-broadcaster) (Elixir, HTTP/3 WebTransport only). `mixer/broadcaster/apps/server.py` is deprecated and will be removed once the add-on defaults to the relay; the client modules in `mixer/broadcaster` stay.
+
 ## Updates
 
 Updates are announced in the [mixer-addon Blender Chat](https://blender.chat/channel/mixer-addon) channel.
