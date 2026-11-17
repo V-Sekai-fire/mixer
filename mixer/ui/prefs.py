@@ -39,7 +39,7 @@ class MIXER_MT_prefs_main_menu(Menu):  # noqa 801
 
         row = layout.row(align=True)
         row.operator("mixer.open_documentation_url", text="Documentation").path = (
-            "https://ubisoft-mixer.readthedocs.io/en/latest/"
+            "https://v-sekai-fire.github.io/mixer/"
         )
 
         row = layout.row(align=True)

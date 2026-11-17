@@ -4,8 +4,8 @@ Feedback and Issues
 Feedback
 --------
 
-For feedback, suggestions and to discuss ideas around Mixer you can directly contact us on Blender Chat:
-https://blender.chat/channel/mixer-addon
+For feedback, suggestions and to discuss ideas around Mixer, open an issue:
+https://github.com/V-Sekai-fire/mixer/issues
 
 Reporting an issue
 ------------------
@@ -15,10 +15,10 @@ Before reporting an issue, please make sure that are using the :ref:`latest vers
 - the :ref:`faq <FAQ>`,
 - restrictions in :ref:`synchronized` ,
 - known problems in :ref:`caveats`,
-- current GitHub `issue list <https://github.com/ubisoft/mixer/issues/>`_ .
+- current GitHub `issue list <https://github.com/V-Sekai-fire/mixer/issues/>`_ .
 
 
-If you think you have found a bug or would like to propose a new feature, please report an `issue <https://github.com/ubisoft/mixer/issues/>`_ on Gitlab.
+If you think you have found a bug or would like to propose a new feature, please report an `issue <https://github.com/V-Sekai-fire/mixer/issues/>`_ on GitHub.
 
 Please consider attaching the Mixer log file:
 

@@ -46,8 +46,8 @@ bl_info = {
     "blender": (2, 91, 0),
     "location": "View3D > Mixer",
     "warning": "Experimental addon, can break your scenes",
-    "wiki_url": "https://github.com/ubisoft/mixer/",
-    "doc_url": "https://ubisoft-mixer.readthedocs.io/en/latest/",
+    "wiki_url": "https://github.com/V-Sekai-fire/mixer/",
+    "doc_url": "https://v-sekai-fire.github.io/mixer/",
     "tracker_url": "",
     "category": "Collaboration",
 }

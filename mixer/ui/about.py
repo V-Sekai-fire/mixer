@@ -76,7 +76,7 @@ class Mixer_OT_About(Operator):  # noqa 801
         row.label(text="Documentation:")
         row.separator()
         row.operator("mixer.open_documentation_url", text="Documentation, Tutorials...").path = (
-            "https://ubisoft-mixer.readthedocs.io/en/latest/"
+            "https://v-sekai-fire.github.io/mixer/"
         )
 
         # Download
@@ -85,7 +85,7 @@ class Mixer_OT_About(Operator):  # noqa 801
         row.label(text="Downloads:")
         row.separator()
         row.operator("mixer.open_documentation_url", text="Latest Release...").path = (
-            "https://github.com/ubisoft/mixer/releases/latest/"
+            "https://github.com/V-Sekai-fire/mixer/releases/latest/"
         )
 
         # Source code
@@ -94,7 +94,7 @@ class Mixer_OT_About(Operator):  # noqa 801
         row.label(text="Source Code:")
         row.separator()
         row.operator("mixer.open_documentation_url", text="Mixer on GitHub...").path = (
-            "https://github.com/ubisoft/mixer/"
+            "https://github.com/V-Sekai-fire/mixer/"
         )
 
         box.separator()
