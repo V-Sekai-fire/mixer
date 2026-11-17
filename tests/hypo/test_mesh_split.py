@@ -88,3 +88,38 @@ def test_invariant_a_shell_that_fits_is_never_cut(n, limit):
     pieces = mesh_split.split(p, t, limit)
     if len(t) <= limit:
         assert len(pieces) == 1
+
+
+from mixer.broadcaster import meshlets  # noqa: E402
+
+needs_lib = pytest.mark.skipif(not meshlets.available(), reason="run tools/build_meshopt.sh")
+
+
+@needs_lib
+def test_golden_meshlets_cut_a_big_shell():
+    p, t = sheet(30)  # 1800 triangles, one shell
+    ms = meshlets.build(p, t, list(range(len(t))), 124)
+    assert len(ms) >= 15 and all(1 <= len(m) <= 124 for m in ms)
+    assert sorted(i for m in ms for i in m) == list(range(len(t)))
+    pieces = mesh_split.split(p, t, 300)
+    assert all(len(x) <= 300 for x in pieces) and sorted(i for x in pieces for i in x) == list(range(len(t)))
+    assert len(pieces) < len(ms)  # meshlets packed together, not one entity per meshlet
+
+
+@needs_lib
+@settings(max_examples=40, deadline=None)
+@given(soup)
+def test_invariant_meshlet_pieces_partition(args):
+    points, ntris, limit = args
+    tris = [(i % len(points), (i * 7 + 1) % len(points), (i * 13 + 2) % len(points)) for i in range(ntris)]
+    pieces = mesh_split.split(points, tris, max(limit, 4))
+    assert sorted(i for x in pieces for i in x) == list(range(ntris))
+    assert all(1 <= len(x) <= max(limit, 4) for x in pieces)
+
+
+@needs_lib
+def test_control_meshlet_cut_loses_nothing_on_a_repeated_triangle():
+    p = [(0, 0, 0), (1, 0, 0), (0, 1, 0)]
+    t = [(0, 1, 2)] * 6
+    pieces = mesh_split.split(p, t, 4)
+    assert sorted(i for x in pieces for i in x) == list(range(6)) and all(len(x) <= 4 for x in pieces)

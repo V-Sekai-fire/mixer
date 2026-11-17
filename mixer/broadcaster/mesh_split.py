@@ -8,8 +8,8 @@ The rule follows what the project already does with models:
   1. shells (model_explode's explode.gd): triangles that share a vertex, vertices welded by position, are one shell; nothing
      is cut, so every piece edge is an edge the artist made;
   2. small shells are packed together, largest first, into a piece that is still under the limit;
-  3. a shell over the limit is cut on a grid (godot-splerger's split by grid): a triangle goes whole to the cell that holds
-     its centre, none is split or copied; a cell still over the limit is cut again along its longest side at the median.
+  3. a shell over the limit is cut into meshlets by meshoptimizer (meshlets.py), consecutive meshlets packed into pieces;
+     no triangle is split or copied. Where the library is not built it is cut on a grid (godot-splerger's split by grid).
 
 `split(points, tris, max_tris)` returns lists of triangle indices: a partition of range(len(tris)), each at most `max_tris`,
 the same for the same input.
@@ -52,8 +52,25 @@ def _centre(points: Sequence[Point], t: Tri) -> Point:
     return ((a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3)
 
 
+def meshlet_cut(points: Sequence[Point], tris: Sequence[Tri], ids: List[int], max_tris: int) -> List[List[int]]:
+    """One shell over the limit, cut with meshoptimizer's meshlet builder: compact patches in an order that keeps
+    neighbours together, then runs of consecutive meshlets packed into pieces of at most max_tris triangles."""
+    from mixer.broadcaster import meshlets
+
+    pieces: List[List[int]] = []
+    run: List[int] = []
+    for m in meshlets.build(points, tris, ids, max_tris):
+        if run and len(run) + len(m) > max_tris:
+            pieces.append(run)
+            run = []
+        run.extend(m)
+    if run:
+        pieces.append(run)
+    return pieces
+
+
 def grid_cut(points: Sequence[Point], tris: Sequence[Tri], ids: List[int], max_tris: int) -> List[List[int]]:
-    """One shell over the limit, cut by a grid over its bounding box, then by medians where a cell is still too big."""
+    """Without meshoptimizer: one shell over the limit, cut by a grid over its bounding box, then by medians."""
     centres = {i: _centre(points, tris[i]) for i in ids}
     lo = [min(centres[i][k] for i in ids) for k in range(3)]
     hi = [max(centres[i][k] for i in ids) for k in range(3)]
@@ -80,6 +97,12 @@ def _median_cut(centres: Dict[int, Point], ids: List[int], max_tris: int) -> Lis
     return _median_cut(centres, ordered[:half], max_tris) + _median_cut(centres, ordered[half:], max_tris)
 
 
+def _meshlets_ok() -> bool:
+    from mixer.broadcaster import meshlets
+
+    return meshlets.available()
+
+
 def split(points: Sequence[Point], tris: Sequence[Tri], max_tris: int) -> List[List[int]]:
     if max_tris < 1:
         raise ValueError("max_tris is at least 1")
@@ -89,7 +112,7 @@ def split(points: Sequence[Point], tris: Sequence[Tri], max_tris: int) -> List[L
     small: List[List[int]] = []
     for shell in shells(points, tris):
         if len(shell) > max_tris:
-            pieces.extend(grid_cut(points, tris, shell, max_tris))
+            pieces.extend((meshlet_cut if max_tris >= 4 and _meshlets_ok() else grid_cut)(points, tris, shell, max_tris))
         else:
             small.append(shell)
     bins: List[List[int]] = []
