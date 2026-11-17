@@ -26,10 +26,13 @@ import asyncio
 import logging
 import queue
 import threading
-from typing import Callable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple
 
 from mixer.broadcaster import common
 from mixer.broadcaster.common import MessageType
+
+if TYPE_CHECKING:
+    from mixer.broadcaster.relay import RelayClient
 
 logger = logging.getLogger(__name__)
 
@@ -41,11 +44,11 @@ class RelayTransport:
         self.host, self.port, self.cafile, self.credentials = host, port, cafile, credentials
         self._loop: Optional[asyncio.AbstractEventLoop] = None
         self._thread: Optional[threading.Thread] = None
-        self._client = None
+        self._client: Optional["RelayClient"] = None
         self._incoming: "queue.Queue[common.Command]" = queue.Queue()
         self._started = threading.Event()
         self._error: Optional[BaseException] = None
-        self._stop: Optional[asyncio.Future] = None
+        self._stop: Optional["asyncio.Future[None]"] = None
 
     # ---- life ----
 
@@ -56,37 +59,39 @@ class RelayTransport:
             raise ConnectionError(f"could not join the relay at {self.host}:{self.port}: {self._error}")
 
     def _run(self) -> None:
-        self._loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self._loop)
+        loop = asyncio.new_event_loop()
+        self._loop = loop
+        asyncio.set_event_loop(loop)
         try:
-            self._loop.run_until_complete(self._main())
+            loop.run_until_complete(self._main(loop))
         except BaseException as e:  # reported to start(), or logged if it happens later
             self._error = e
             logger.error("relay transport stopped: %s", e)
         finally:
             self._started.set()
-            self._loop.close()
+            loop.close()
 
-    async def _main(self) -> None:
+    async def _main(self, loop: asyncio.AbstractEventLoop) -> None:
         from mixer.broadcaster.relay import open_relay
 
-        self._stop = self._loop.create_future()
+        stop: "asyncio.Future[None]" = loop.create_future()
+        self._stop = stop
         async with open_relay(self.host, self.port, self.cafile) as client:
             self._client = client
             if self.credentials is not None:
-                token, pub, sign = await self._loop.run_in_executor(None, self.credentials)
+                token, pub, sign = await loop.run_in_executor(None, self.credentials)
                 await client.login(token, pub, sign)
             self._started.set()
             pumps = [
                 asyncio.ensure_future(self._pump_commands(client)),
                 asyncio.ensure_future(self._pump_poses(client)),
             ]
-            await self._stop
+            await stop
             for p in pumps:
                 p.cancel()
             await asyncio.gather(*pumps, return_exceptions=True)
 
-    async def _pump_commands(self, client) -> None:
+    async def _pump_commands(self, client: "RelayClient") -> None:
         while True:
             t, _owner, data = await client.commands.get()
             try:
@@ -94,7 +99,7 @@ class RelayTransport:
             except ValueError:  # a type this build does not know: dropped, as the Python server's clients drop it
                 logger.warning("unknown command type %s dropped", t)
 
-    async def _pump_poses(self, client) -> None:
+    async def _pump_poses(self, client: "RelayClient") -> None:
         while True:
             self._incoming.put(common.Command(MessageType.ENTITY_STATE, await client.poses.get()))
 

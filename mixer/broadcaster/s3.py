@@ -7,10 +7,11 @@ V4, standard library only. Keys come from AWS_ACCESS_KEY_ID and AWS_SECRET_ACCES
 import datetime
 import hashlib
 import hmac
+import http.client
 import os
 import urllib.parse
 import urllib.request
-from typing import Optional
+from typing import Dict, Optional, cast
 
 REGION, SERVICE = "us-east-1", "s3"
 
@@ -21,7 +22,7 @@ def _hmac(key: bytes, msg: str) -> bytes:
 
 def sign(
     method: str, host: str, path: str, payload: bytes, access: str, secret: str, now: Optional[datetime.datetime] = None
-):
+) -> Dict[str, str]:
     """The headers that sign `method path` for `host`. `path` is the already encoded absolute path."""
     now = now or datetime.datetime.now(datetime.timezone.utc)
     amz, day = now.strftime("%Y%m%dT%H%M%SZ"), now.strftime("%Y%m%d")
@@ -40,7 +41,7 @@ def sign(
     }
 
 
-def _request(method: str, endpoint: str, bucket: str, key: str, payload: bytes = b""):
+def _request(method: str, endpoint: str, bucket: str, key: str, payload: bytes = b"") -> http.client.HTTPResponse:
     access, secret = os.environ["AWS_ACCESS_KEY_ID"], os.environ["AWS_SECRET_ACCESS_KEY"]
     host = urllib.parse.urlsplit(endpoint).netloc
     path = "/" + urllib.parse.quote(f"{bucket}/{key}")
@@ -50,7 +51,7 @@ def _request(method: str, endpoint: str, bucket: str, key: str, payload: bytes =
         method=method,
         headers=sign(method, host, path, payload, access, secret),
     )
-    return urllib.request.urlopen(req)
+    return cast(http.client.HTTPResponse, urllib.request.urlopen(req))
 
 
 def put(endpoint: str, bucket: str, key: str, data: bytes) -> None:
@@ -58,4 +59,5 @@ def put(endpoint: str, bucket: str, key: str, data: bytes) -> None:
 
 
 def get(endpoint: str, bucket: str, key: str) -> bytes:
-    return _request("GET", endpoint, bucket, key).read()
+    data: bytes = _request("GET", endpoint, bucket, key).read()
+    return data
