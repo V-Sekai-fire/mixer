@@ -50,13 +50,14 @@ def sign(priv, room, nonce):
     return r.to_bytes(32, "big") + s.to_bytes(32, "big")
 
 
-def get_token(room, pub):
-    """`room` is one name, or a list of names for a token that covers several rooms."""
+def get_token(room, pub, ops=None):
+    """`room` is one name, or a list of names for a token that covers several rooms. `ops` (such as ["read"]) asks the
+    minter for those operations in the token."""
     url = os.environ["MB_ZT_MINTER"]
     field = {"rooms": list(room)} if isinstance(room, (list, tuple)) else {"room": room}
     req = urllib.request.Request(
         url + "/mint",
-        data=json.dumps({**field, "key": b64(pub)}).encode(),
+        data=json.dumps({**field, "key": b64(pub), **({"ops": list(ops)} if ops else {})}).encode(),
         headers={"content-type": "application/json"},
     )
     with urllib.request.urlopen(req, timeout=30) as r:
@@ -84,10 +85,10 @@ class ZTHub:
         return None
 
 
-async def admit(hub, room, key=None):
+async def admit(hub, room, key=None, ops=None):
     """hello, challenge, auth. Returns the key used. Raises if the relay does not say ready."""
     priv, pub = key or gen_key()
-    token = await asyncio.get_event_loop().run_in_executor(None, get_token, room, pub)
+    token = await asyncio.get_event_loop().run_in_executor(None, get_token, room, pub, ops)
     ch = await hub.ask({"t": "hello"})
     if not ch or ch.get("t") != "challenge":
         raise RuntimeError(f"no challenge from the relay: {ch}")

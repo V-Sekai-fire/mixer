@@ -29,6 +29,47 @@ class Hub(zt.ZTHub, QuicConnectionProtocol):
                 self.got.append((time.time(), e.data))
 
 
+async def fetch_meshes(h):
+    """Ask for each mesh digest seen, then fetch what the relay presigned and check it end to end."""
+    import hashlib
+    import urllib.request
+
+    import zstandard
+
+    digests = sorted({d[62:94].hex() for _, d in h.got if len(d) == 100 and any(d[62:94])})
+    print("LISTEN asking for", len(digests), "mesh(es)", flush=True)
+    for dg in digests + ["00" * 32]:
+        r = await h.ask({"t": "mesh", "digest": dg})
+        if r is None or r.get("t") != "mesh":
+            print("LISTEN mesh", dg[:8], "->", r, flush=True)
+            continue
+        get = lambda u: urllib.request.urlopen(u, timeout=20).read()  # noqa: E731
+        index = get(r["index"])
+        assert hashlib.sha256(index).hexdigest() == dg, "the index is not the one the digest names"
+        ids, off = [], 48 + 16
+        while index[off : off + 8] != bytes(8):
+            ids.append(index[off + 8 : off + 40])
+            off += 40
+        assert len(ids) == len(r["chunks"])
+        out = b""
+        for cid, url in zip(ids, r["chunks"]):
+            raw = zstandard.ZstdDecompressor().decompress(get(url), max_output_size=1 << 26)
+            assert hashlib.new("sha512_256", raw).digest() == cid, "a chunk is not the one the index names"
+            out += raw
+        print(f"LISTEN mesh {dg[:8]} ok: {len(ids)} chunk(s), {len(out)} bytes, expires {r['expires']}s", flush=True)
+        print(
+            "LISTEN   " + out.decode().splitlines()[0],
+            "|",
+            [l for l in out.decode().splitlines() if "def Mesh" in l][0],
+            flush=True,
+        )
+        try:
+            get(r["index"].replace(dg, "0" * 64))
+            print("LISTEN   ERROR: another object was readable with this signature", flush=True)
+        except Exception as e:
+            print("LISTEN   a signature does not open another object:", getattr(e, "code", e), flush=True)
+
+
 async def main():
     c = QuicConfiguration(is_client=True, alpn_protocols=H3_ALPN, max_datagram_frame_size=65536)
     c.load_verify_locations(CERT)
@@ -49,9 +90,12 @@ async def main():
         )
         h.transmit()
         h.session = await asyncio.wait_for(h.ready, 8)
-        await zt.admit(h, ROOM)
-        print("LISTEN admitted", flush=True)
+        ops = [o for o in os.environ.get("LISTEN_OPS", "").split(",") if o]
+        await zt.admit(h, ROOM, ops=ops)
+        print("LISTEN admitted", "with" if ops else "without", ops, flush=True)
         await asyncio.sleep(SECONDS)
+        if os.environ.get("LISTEN_MESH"):
+            await fetch_meshes(h)
     seen, t0 = {}, None
     for t, d in h.got:
         if len(d) != 100:
@@ -66,7 +110,9 @@ async def main():
         if seen.get(gid, [None])[-1] != pos:
             seen.setdefault(gid, []).append(pos)
             print(f"LISTEN t={t - t0:5.1f}s entity {gid} at {pos}", flush=True)
-    print(f"LISTEN {sum(1 for _, d in h.got if len(d) == 100)} packets, entities {sorted(seen)}")
+    print(
+        f"LISTEN {sum(1 for _, d in h.got if len(d) == 100)} packets, entities {sorted(k for k in seen if isinstance(k, int))}"
+    )
 
 
 asyncio.run(main())
