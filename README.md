@@ -58,7 +58,7 @@ The broadcaster now lives in [mixer-broadcaster](https://github.com/V-Sekai-fire
 
 ## Updates
 
-Updates are announced in the [mixer-addon Blender Chat](https://blender.chat/channel/mixer-addon) channel.
+Mixer is archived, so this repository is not related to Ubisoft activities anymore.
 
 ## Support
 
