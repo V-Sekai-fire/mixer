@@ -31,7 +31,9 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-BROADCASTER = os.environ.get("MIXER_BROADCASTER", os.path.expanduser("~/.hermes/cache/scratch/mixer-broadcaster"))
+BROADCASTER = os.environ.get(
+    "MIXER_BROADCASTER", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "third_party", "mixer-broadcaster")
+)
 SERVICE = "mixer-relay-test"
 BAO_NAME = {"root": "root-key", "third-party": "third-party-key"}
 

@@ -79,3 +79,9 @@ You can also get involved into the development of Mixer, discover how by reading
 The original code is Copyright (C) 2020 Ubisoft.
 
 All code of the `mixer` package is under the GPLv3 license except code of the `mixer.broadcaster` sub-package, which is under the MIT license.
+
+## The relay server (a separate repository)
+
+The Elixir relay is not part of this repository: this add-on is GPL-3.0 and the relay is MIT/Apache-2.0, so they are
+kept physically apart. The test tools reach it as a git submodule, `third_party/mixer-broadcaster`
+(`git submodule update --init`), or at the path in `MIXER_BROADCASTER`. Nothing in the add-on imports it.
