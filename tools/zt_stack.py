@@ -115,7 +115,7 @@ ROOT, TP = keychain_key("root"), keychain_key("third-party")
 TTL = 3600
 
 
-def mint(room, key_b64):  # room: one name, or a list of names for a token that covers several
+def mint(room, key_b64, ops=()):  # room: one name, or a list of names for a token that covers several
     import base64
 
     pub = base64.urlsafe_b64decode(key_b64 + "==")
@@ -124,7 +124,8 @@ def mint(room, key_b64):  # room: one name, or a list of names for a token that 
         'tp = Base.decode16!(System.fetch_env!("MB_TP_KEY"), case: :mixed)\n'
         'room = case String.split(System.fetch_env!("ZT_ROOM"), "\\n", trim: true) do [one] -> one; many -> many end\n'
         'thumb = Base.decode16!(System.fetch_env!("ZT_THUMB"), case: :lower)\n'
-        't = MixerBroadcaster.Token.issue(root, room, "minter", tp)\n'
+        'ops = String.split(System.get_env("ZT_OPS", ""), "\\n", trim: true)\n'
+        't = MixerBroadcaster.Token.issue(root, room, "minter", tp, ops)\n'
         '{:ok, full} = MixerBroadcaster.Token.discharge(t, tp, thumb, String.to_integer(System.fetch_env!("ZT_TTL")), System.os_time(:second))\n'
         'IO.puts("TOKEN " <> Base.url_encode64(full, padding: false))\n'
     )
@@ -133,6 +134,7 @@ def mint(room, key_b64):  # room: one name, or a list of names for a token that 
         MB_ROOT_KEY=ROOT,
         MB_TP_KEY=TP,
         ZT_ROOM=(room if isinstance(room, str) else "\n".join(room)),
+        ZT_OPS="\n".join(ops),
         ZT_THUMB=hashlib.sha256(pub).hexdigest(),
         ZT_TTL=str(TTL),
         MIX_ENV="dev",
@@ -153,7 +155,11 @@ class Minter(BaseHTTPRequestHandler):
             n = int(self.headers.get("content-length", "0"))
             body = json.loads(self.rfile.read(n))
             room = body["rooms"] if "rooms" in body else str(body["room"])
-            token = mint(room if isinstance(room, str) else [str(r) for r in room], str(body["key"]))
+            token = mint(
+                room if isinstance(room, str) else [str(r) for r in room],
+                str(body["key"]),
+                [str(o) for o in body.get("ops", [])],
+            )
             data = json.dumps({"token": token}).encode()
             self.send_response(200)
         except Exception:
