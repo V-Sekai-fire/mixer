@@ -23,7 +23,10 @@ def apply(loc, euler, scale, ghost=False):
     env = dict(os.environ, REPO=REPO, POSE=json.dumps({"loc": loc, "euler": euler, "scale": scale, "ghost": ghost}))
     out = subprocess.run(
         [BLENDER, "-b", "--factory-startup", "--python", os.path.join(REPO, "tools", "pose_apply_probe.py")],
-        env=env, capture_output=True, text=True, timeout=120,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=120,
     ).stdout
     line = [ln for ln in out.splitlines() if ln.startswith("PROBE ")]
     assert line, out[-600:]

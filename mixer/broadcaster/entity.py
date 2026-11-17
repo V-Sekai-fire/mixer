@@ -273,7 +273,8 @@ def pack_command(
     store_index: Optional[Callable[[bytes], bytes]] = None,
 ) -> bytes:
     """A command as 100 bytes. `store(data) -> digest` puts bulk data in the chunk store; it is called only when the
-    data does not fit inside the packet. Over 16 MiB, `store_index(data) -> digest of the desync index` is used instead."""
+    data does not fit inside the packet. Over 16 MiB, `store_index(data) -> digest of the desync index` is used instead.
+    """
     if not 1 <= command_type <= 0xFFFF or command_type == POSE:
         raise ValueError("this message type does not ride as a command")
     if not 0 <= owner < (1 << 24):

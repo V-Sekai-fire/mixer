@@ -24,7 +24,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from mixer.broadcaster import mesh_split  # noqa: E402
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-GODOT = os.environ.get("GODOT_DOUBLE", os.path.join(os.environ.get("TMPDIR", "/tmp"), "ez", "godot.macos.editor.double.arm64"))
+GODOT = os.environ.get(
+    "GODOT_DOUBLE", os.path.join(os.environ.get("TMPDIR", "/tmp"), "ez", "godot.macos.editor.double.arm64")
+)
 EME = os.environ.get("EME", os.path.expanduser("~/.hermes/cache/scratch/eme"))
 pytestmark = pytest.mark.skipif(
     not (os.path.exists(GODOT) and os.path.exists(os.path.join(EME, "addons/model_explode/explode.gd"))),
@@ -35,21 +37,37 @@ pytestmark = pytest.mark.skipif(
 def explode(points, tris, xform):
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
         json.dump({"points": points, "tris": tris, "xform": xform}, f)
-    env = dict(os.environ, SHELLS_IN=f.name, EXPLODE_GD="res://addons/model_explode/explode.gd",
-               DYLD_FALLBACK_LIBRARY_PATH=os.path.dirname(GODOT) + ":/usr/local/lib")
-    out = subprocess.run([GODOT, "--headless", "--path", EME, "--script", os.path.join(REPO, "tests/godot/explode_shells.gd")],
-                         env=env, capture_output=True, text=True, timeout=90).stdout
+    env = dict(
+        os.environ,
+        SHELLS_IN=f.name,
+        EXPLODE_GD="res://addons/model_explode/explode.gd",
+        DYLD_FALLBACK_LIBRARY_PATH=os.path.dirname(GODOT) + ":/usr/local/lib",
+    )
+    out = subprocess.run(
+        [GODOT, "--headless", "--path", EME, "--script", os.path.join(REPO, "tests/godot/explode_shells.gd")],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=90,
+    ).stdout
     os.unlink(f.name)
     rows = [ln.split() for ln in out.splitlines() if ln.startswith("SHELL ")]
     assert rows, out[-400:]
     return sorted(int(n) for k, n in (r[1:] for r in rows) if k.startswith("shell:")), sum(
-        int(n) for k, n in (r[1:] for r in rows) if k.startswith("small:"))
+        int(n) for k, n in (r[1:] for r in rows) if k.startswith("small:")
+    )
 
 
 def world(points, xform):
     m = xform
-    return [(m[0] * x + m[1] * y + m[2] * z + m[9], m[3] * x + m[4] * y + m[5] * z + m[10], m[6] * x + m[7] * y + m[8] * z + m[11])
-            for x, y, z in points]
+    return [
+        (
+            m[0] * x + m[1] * y + m[2] * z + m[9],
+            m[3] * x + m[4] * y + m[5] * z + m[10],
+            m[6] * x + m[7] * y + m[8] * z + m[11],
+        )
+        for x, y, z in points
+    ]
 
 
 def port(points, tris, xform):
@@ -61,7 +79,9 @@ def port(points, tris, xform):
 REAL = os.environ.get("REAL_OUT", os.path.join(os.environ.get("TMPDIR", "/tmp"), "real"))
 NAMES = sorted(f[:-5] for f in os.listdir(REAL)) if os.path.isdir(REAL) else []
 SMALL = [n for n in NAMES if os.path.getsize(os.path.join(REAL, n + ".json")) < 2_000_000]
-BIG = [n for n in NAMES if n not in SMALL]  # a scanned character is 120k triangles a mesh: sampled, not all, in the golden
+BIG = [
+    n for n in NAMES if n not in SMALL
+]  # a scanned character is 120k triangles a mesh: sampled, not all, in the golden
 needs_real = pytest.mark.skipif(not NAMES, reason="run tools/export_real_meshes.py (REAL_OUT)")
 
 

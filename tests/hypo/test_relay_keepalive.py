@@ -55,5 +55,6 @@ def test_control_cancelled_stops_and_the_default_is_short_enough():
     n, pings = run(0.03, 0.3, cancel_at=0.1)
     assert len(pings) == n  # nothing after the cancel
     import importlib
+
     importlib.reload(relay_transport)
     assert relay_transport.KEEPALIVE_SECONDS <= 10.0

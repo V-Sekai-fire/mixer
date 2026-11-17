@@ -21,10 +21,15 @@ pytestmark = pytest.mark.skipif(not (os.path.exists(BLENDER) or shutil.which(BLE
 
 
 def play(keys, frames, shared=True):
-    env = dict(os.environ, REPO=os.path.abspath(REPO), ANIM=json.dumps({"keys": keys, "frames": frames, "shared": shared}))
+    env = dict(
+        os.environ, REPO=os.path.abspath(REPO), ANIM=json.dumps({"keys": keys, "frames": frames, "shared": shared})
+    )
     out = subprocess.run(
         [BLENDER, "-b", "--factory-startup", "--python", os.path.join(REPO, "tools", "anim_probe.py")],
-        env=env, capture_output=True, text=True, timeout=120,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=120,
     ).stdout
     line = [ln for ln in out.splitlines() if ln.startswith("PROBE ")]
     assert line, out[-600:]
@@ -45,7 +50,12 @@ def test_control_still_and_unshared_send_nothing():
 
 @settings(max_examples=8, deadline=None)
 @given(
-    keys=st.lists(st.tuples(st.integers(1, 12), st.sampled_from([0.0, 1.0, 2.5, -3.0])), min_size=1, max_size=5, unique_by=lambda k: k[0]),
+    keys=st.lists(
+        st.tuples(st.integers(1, 12), st.sampled_from([0.0, 1.0, 2.5, -3.0])),
+        min_size=1,
+        max_size=5,
+        unique_by=lambda k: k[0],
+    ),
     frames=st.integers(2, 12),
 )
 def test_invariant_one_pose_per_change(keys, frames):

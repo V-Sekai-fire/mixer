@@ -52,7 +52,8 @@ def pick_target(available: "list[str]", preferred: "list[str]") -> Optional[str]
 
 def encode(png: str, out: str, srgb: bool, hdr: bool = False, basisu: str = "basisu") -> int:
     """PNG (or EXR/HDR when `hdr`) to KTX2 with mipmaps; returns the size. Colour maps: XUASTC 8x6, data maps (normals,
-    roughness...): XUASTC 6x6, both from the LDR set; HDR: UASTC HDR 4x4. Every output is checked against the blocklist."""
+    roughness...): XUASTC 6x6, both from the LDR set; HDR: UASTC HDR 4x4. Every output is checked against the blocklist.
+    """
     if hdr:
         mode = ["-hdr_4x4"]
     elif srgb:

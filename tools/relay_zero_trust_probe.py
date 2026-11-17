@@ -22,7 +22,8 @@ from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
 BROADCASTER = os.environ.get(
-    "MIXER_BROADCASTER", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "third_party", "mixer-broadcaster")
+    "MIXER_BROADCASTER",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "third_party", "mixer-broadcaster"),
 )
 
 

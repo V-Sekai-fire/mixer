@@ -99,7 +99,11 @@ if os.environ.get("LIVE_GUI") == "1":
                 (4.0, "create Probe", lambda: bpy.ops.mesh.primitive_cube_add(size=1.0, location=(-2.0, 1.5, 0.0))),
                 (8.0, "move Probe", lambda: setattr(bpy.data.objects["Cube"], "location", (2.0, 1.5, 0.0))),
                 (12.0, "delete Probe", lambda: bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)),
-                (16.0, "create Probe again", lambda: bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0.0, 2.0, 0.0))),
+                (
+                    16.0,
+                    "create Probe again",
+                    lambda: bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0.0, 2.0, 0.0)),
+                ),
             ]
         )
         _next = [next(_steps, None)]

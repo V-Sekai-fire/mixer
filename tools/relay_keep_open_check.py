@@ -65,7 +65,11 @@ try:
     a.set_room_keep_open(KEPT, True)
     updates = [cmd for cmd in pump(a) if cmd.type == T.ROOM_UPDATE]
     seen = [common.decode_json(u.data, 0)[0] for u in updates]
-    check("a is told the room is kept open (ROOM_UPDATE)", any(KEPT in u and u[KEPT].get("keep_open") is True for u in seen), seen)
+    check(
+        "a is told the room is kept open (ROOM_UPDATE)",
+        any(KEPT in u and u[KEPT].get("keep_open") is True for u in seen),
+        seen,
+    )
     a.leave_room(KEPT)
     pump(a)
     r = rooms_seen(b)

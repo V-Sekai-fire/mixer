@@ -145,7 +145,9 @@ def _meshlets_ok() -> bool:
     return meshlets.available()
 
 
-def split(points: Sequence[Point], tris: Sequence[Tri], max_tris: int, world: Optional[Sequence[Point]] = None) -> List[List[int]]:
+def split(
+    points: Sequence[Point], tris: Sequence[Tri], max_tris: int, world: Optional[Sequence[Point]] = None
+) -> List[List[int]]:
     if max_tris < 1:
         raise ValueError("max_tris is at least 1")
     if len(tris) <= max_tris:
@@ -156,7 +158,9 @@ def split(points: Sequence[Point], tris: Sequence[Tri], max_tris: int, world: Op
         pieces: List[List[int]] = []
         run: List[int] = []
         found = shells(points, tris, world)  # explode.gd's pieces first, then its small shells that travel together
-        ordered = [x for x in found if is_piece(len(x), len(tris))] + [x for x in found if not is_piece(len(x), len(tris))]
+        ordered = [x for x in found if is_piece(len(x), len(tris))] + [
+            x for x in found if not is_piece(len(x), len(tris))
+        ]
         for shell in ordered:  # consecutive meshlets, shell by shell, packed into pieces
             for m in meshlets.build(points, tris, shell, max_tris):
                 if run and len(run) + len(m) > max_tris:

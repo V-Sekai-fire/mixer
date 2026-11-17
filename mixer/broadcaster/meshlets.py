@@ -19,8 +19,12 @@ MAX_VERTICES = 255
 
 
 class _Meshlet(ctypes.Structure):
-    _fields_ = [("vertex_offset", ctypes.c_uint), ("triangle_offset", ctypes.c_uint),
-                ("vertex_count", ctypes.c_uint), ("triangle_count", ctypes.c_uint)]
+    _fields_ = [
+        ("vertex_offset", ctypes.c_uint),
+        ("triangle_offset", ctypes.c_uint),
+        ("vertex_count", ctypes.c_uint),
+        ("triangle_count", ctypes.c_uint),
+    ]
 
 
 _lib = None
@@ -42,9 +46,18 @@ def _load():
                 lib.meshopt_buildMeshletsBound.argtypes = [ctypes.c_size_t] * 3
                 lib.meshopt_buildMeshlets.restype = ctypes.c_size_t
                 lib.meshopt_buildMeshlets.argtypes = [
-                    ctypes.POINTER(_Meshlet), ctypes.POINTER(ctypes.c_uint), ctypes.POINTER(ctypes.c_ubyte),
-                    ctypes.POINTER(ctypes.c_uint), ctypes.c_size_t, ctypes.POINTER(ctypes.c_float), ctypes.c_size_t,
-                    ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t, ctypes.c_float]
+                    ctypes.POINTER(_Meshlet),
+                    ctypes.POINTER(ctypes.c_uint),
+                    ctypes.POINTER(ctypes.c_ubyte),
+                    ctypes.POINTER(ctypes.c_uint),
+                    ctypes.c_size_t,
+                    ctypes.POINTER(ctypes.c_float),
+                    ctypes.c_size_t,
+                    ctypes.c_size_t,
+                    ctypes.c_size_t,
+                    ctypes.c_size_t,
+                    ctypes.c_float,
+                ]
                 _lib = lib
                 break
             except OSError:
@@ -56,8 +69,12 @@ def available() -> bool:
     return _load() is not None
 
 
-def build(points: Sequence[Tuple[float, float, float]], tris: Sequence[Tuple[int, int, int]], ids: Sequence[int],
-          max_triangles: int) -> List[List[int]]:
+def build(
+    points: Sequence[Tuple[float, float, float]],
+    tris: Sequence[Tuple[int, int, int]],
+    ids: Sequence[int],
+    max_triangles: int,
+) -> List[List[int]]:
     lib = _load()
     if lib is None:
         raise RuntimeError("meshoptimizer is not built: run tools/build_meshopt.sh")
@@ -73,8 +90,18 @@ def build(points: Sequence[Tuple[float, float, float]], tris: Sequence[Tuple[int
     mv = (ctypes.c_uint * (bound * MAX_VERTICES))()
     mt = (ctypes.c_ubyte * (bound * per * 3))()
     count = lib.meshopt_buildMeshlets(
-        meshlets, mv, mt, (ctypes.c_uint * n)(*index), n, (ctypes.c_float * len(flat))(*flat), len(points),
-        12, MAX_VERTICES, per, ctypes.c_float(0.0))
+        meshlets,
+        mv,
+        mt,
+        (ctypes.c_uint * n)(*index),
+        n,
+        (ctypes.c_float * len(flat))(*flat),
+        len(points),
+        12,
+        MAX_VERTICES,
+        per,
+        ctypes.c_float(0.0),
+    )
     by_corners: Dict[Tuple[int, int, int], List[int]] = {}
     for i in ids:
         by_corners.setdefault(tuple(sorted(tris[i])), []).append(i)  # type: ignore[arg-type]

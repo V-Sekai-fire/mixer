@@ -22,7 +22,10 @@ def probe(n, limit):
     env = dict(os.environ, REPO=REPO, SPLIT=json.dumps({"n": n, "max": limit}))
     out = subprocess.run(
         [BLENDER, "-b", "--factory-startup", "--python", os.path.join(REPO, "tools", "split_probe.py")],
-        env=env, capture_output=True, text=True, timeout=120,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=120,
     ).stdout
     line = [ln for ln in out.splitlines() if ln.startswith("PROBE ")]
     assert line, out[-800:]
