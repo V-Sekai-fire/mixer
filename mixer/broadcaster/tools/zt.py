@@ -11,7 +11,7 @@ Zero trust for the test clients. A client holds its own key and nothing else: it
 its key and room, then proves it holds the key by signing the relay's nonce. It never sees the relay's root key or the
 minter's third-party key. The relay is the closed one (MB_SERVE=1); there is no open mode in a test.
 
-  MB_ZT_MINTER   http://127.0.0.1:<port>   where to get a token (set by tools/zt_stack.py)
+  MB_ZT_MINTER   http://127.0.0.1:<port>   where to get a token (set by mixer/broadcaster/tools/zt_stack.py)
 
 `ZTHub` is the mixin a client's Hub class takes to read replies on bidirectional streams; `admit` runs the handshake.
 """

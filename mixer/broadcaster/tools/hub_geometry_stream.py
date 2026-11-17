@@ -104,7 +104,7 @@ async def main(port, cert, room, geodir, seconds, hz):
         await hub.wait_connected()
         await hub.open("127.0.0.1", port, room)
         if not os.environ.get("MB_ZT_MINTER"):
-            sys.exit("no MB_ZT_MINTER: tests join the closed relay (tools/zt_stack.py), never the open demo")
+            sys.exit("no MB_ZT_MINTER: tests join the closed relay (mixer/broadcaster/tools/zt_stack.py), never the open demo")
         await zt.admit(hub, room)
         print("BLENDER admitted by the relay", flush=True)
         clock, sent, t0 = (0, 0), 0, time.time()

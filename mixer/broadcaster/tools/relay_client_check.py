@@ -1,12 +1,12 @@
 # MIT. Copyright (c) 2026-present K. S. Ernest (iFire) Lee
 # The add-on's own `Client` class, pointed at the closed relay, with two clients: create, store, late join, scope.
-#   MB_PORT MB_CERT MB_ZT_MINTER from tools/zt_stack.py.   python tools/relay_client_check.py
+#   MB_PORT MB_CERT MB_ZT_MINTER from mixer/broadcaster/tools/zt_stack.py.   python mixer/broadcaster/tools/relay_client_check.py
 import base64
 import os
 import sys
 import time
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, os.path.dirname(__file__))
 import zt  # noqa: E402
 from mixer.broadcaster import common, entity  # noqa: E402

@@ -17,7 +17,7 @@ SPDX-License-Identifier = "MIT"
 # tools/ is ours (K. S. Ernest (iFire) Lee) and serves the broadcaster, so it goes under the same rule: a tool with no
 # entry of its own is MIT, with our copyright.
 [[annotations]]
-path = "tools/**"
+path = ["tools/**", "mixer/broadcaster/tools/**"]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026-present K. S. Ernest (iFire) Lee"
 SPDX-License-Identifier = "MIT"
@@ -280,9 +280,9 @@ path = [
   "mixer/broadcaster/relay_transport.py",
   "mixer/broadcaster/s3.py",
   "mixer/broadcaster/wt.py",
-  "tools/hub_probe.py",
-  "tools/zt.py",
-  "tools/zt_stack.py",
+  "mixer/broadcaster/tools/hub_probe.py",
+  "mixer/broadcaster/tools/zt.py",
+  "mixer/broadcaster/tools/zt_stack.py",
 ]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026-present K. S. Ernest (iFire) Lee"
@@ -307,27 +307,27 @@ path = [
   "tests/hypo/test_two_clients.py",
   "tests/hypo/worker.py",
   "tests/ref_wt_server.py",
-  "tools/blender_addon_relay.py",
-  "tools/blender_live_sender.py",
-  "tools/command_golden.py",
-  "tools/export_usda.py",
-  "tools/hub_bench.py",
-  "tools/hub_blender_client.py",
-  "tools/hub_blender_view.py",
-  "tools/hub_geometry_stream.py",
-  "tools/mm_to_packets.py",
-  "tools/relay_client_check.py",
-  "tools/relay_listen.py",
-  "tools/relay_session_check.py",
-  "tools/relay_zero_trust_probe.py",
-  "tools/rfsq_fit.py",
+  "mixer/broadcaster/tools/blender_addon_relay.py",
+  "mixer/broadcaster/tools/blender_live_sender.py",
+  "mixer/broadcaster/tools/command_golden.py",
+  "mixer/broadcaster/tools/export_usda.py",
+  "mixer/broadcaster/tools/hub_bench.py",
+  "mixer/broadcaster/tools/hub_blender_client.py",
+  "mixer/broadcaster/tools/hub_blender_view.py",
+  "mixer/broadcaster/tools/hub_geometry_stream.py",
+  "mixer/broadcaster/tools/mm_to_packets.py",
+  "mixer/broadcaster/tools/relay_client_check.py",
+  "mixer/broadcaster/tools/relay_listen.py",
+  "mixer/broadcaster/tools/relay_session_check.py",
+  "mixer/broadcaster/tools/relay_zero_trust_probe.py",
+  "mixer/broadcaster/tools/rfsq_fit.py",
   "tools/rna_diff.py",
   "tools/rna_schema.py",
-  "tools/swing_twist.py",
-  "tools/wire_measure.py",
-  "tools/wire_predict.py",
-  "tools/zt_listen.py",
-  "tools/zt_two_clients_check.py",
+  "mixer/broadcaster/tools/swing_twist.py",
+  "mixer/broadcaster/tools/wire_measure.py",
+  "mixer/broadcaster/tools/wire_predict.py",
+  "mixer/broadcaster/tools/zt_listen.py",
+  "mixer/broadcaster/tools/zt_two_clients_check.py",
 ]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026-present K. S. Ernest (iFire) Lee"
@@ -336,7 +336,7 @@ SPDX-License-Identifier = "MIT"
 # Carries an SPDX licence tag but no copyright line.
 [[annotations]]
 path = [
-  "tools/xr_grid_entity_packet.py",
+  "mixer/broadcaster/tools/xr_grid_entity_packet.py",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026-present K. S. Ernest (iFire) Lee"

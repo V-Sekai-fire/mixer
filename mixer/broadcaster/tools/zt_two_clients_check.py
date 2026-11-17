@@ -1,5 +1,5 @@
-# Two admitted clients and one outsider, all against the closed relay (tools/zt_stack.py).
-# The sender is tools/hub_geometry_stream.py; the listener is admitted; the outsider joins the room but never logs in.
+# Two admitted clients and one outsider, all against the closed relay (mixer/broadcaster/tools/zt_stack.py).
+# The sender is mixer/broadcaster/tools/hub_geometry_stream.py; the listener is admitted; the outsider joins the room but never logs in.
 # Exit 0 only if the listener heard the sender and the outsider heard nothing.
 import asyncio, os, subprocess, sys, time
 

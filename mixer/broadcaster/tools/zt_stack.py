@@ -16,7 +16,7 @@ Run it, wait for the `ZT READY` line, give the clients the three values it print
 The two keys are constant: made once, kept in the macOS login Keychain (service mixer-relay-test), and read back on
 each run. They sit in this process and the relay's and minter's environments; they are never printed.
 
-  python tools/zt_stack.py [--port 4466] [--minter-port 4467]
+  python mixer/broadcaster/tools/zt_stack.py [--port 4466] [--minter-port 4467]
 """
 
 import argparse

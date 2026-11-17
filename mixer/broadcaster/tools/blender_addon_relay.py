@@ -1,7 +1,7 @@
 # MIT. Copyright (c) 2026-present K. S. Ernest (iFire) Lee
 # Blender with the Mixer add-on itself, joined to the closed relay. Run it in Blender (a window, or --background):
 #   BLENDER_SITE=<dir with aioquic, cryptography> REPO=<mixer checkout> MB_PORT MB_CERT MB_ZT_MINTER MB_ROOM \
-#   Blender [--background] --python tools/blender_addon_relay.py
+#   Blender [--background] --python mixer/broadcaster/tools/blender_addon_relay.py
 # The add-on's own connection code (`mixer.connection`) connects, `join_room` joins, and its depsgraph handler sends each
 # changed object as ENTITY_STATE. With LIVE_MOVE=1 the script moves two objects on a schedule (in a window you drag them).
 import base64
@@ -12,7 +12,7 @@ import time
 sys.path.insert(0, os.environ.get("BLENDER_SITE", ""))
 REPO = os.environ["REPO"]
 sys.path.insert(0, REPO)
-sys.path.insert(0, os.path.join(REPO, "tools"))
+sys.path.insert(0, os.path.join(REPO, "mixer", "broadcaster", "tools"))
 
 import bpy  # noqa: E402
 

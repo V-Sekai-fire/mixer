@@ -1,7 +1,7 @@
 # MIT. Blender as a live relay client: whatever you move in the 3D viewport moves in every other client.
 # Run inside Blender (a window or --background):
 #   BLENDER_SITE=<dir with aioquic> GEO_DIR=<geo dir> MB_PORT=4466 MB_CERT=<cert.pem> MB_ROOM=live \
-#   Blender --python tools/blender_live_sender.py
+#   Blender --python mixer/broadcaster/tools/blender_live_sender.py
 # It builds two objects from the .usda meshes (Suzanne, and the 24-patch chart behind her), publishes both through
 # desync into the chunk store, then every 1/64 s reads each object's world transform and sends it as a 100-byte
 # entity packet over HTTP/3 WebTransport datagrams. The packet's payload names the mesh by the SHA-256 of its index.
@@ -159,7 +159,7 @@ async def net():
         hub.transmit()
         session = hub.session = await asyncio.wait_for(hub.ready, 8)
         if not os.environ.get("MB_ZT_MINTER"):
-            raise RuntimeError("no MB_ZT_MINTER: tests join the closed relay (tools/zt_stack.py), never the open demo")
+            raise RuntimeError("no MB_ZT_MINTER: tests join the closed relay (mixer/broadcaster/tools/zt_stack.py), never the open demo")
         await zt.admit(hub, ROOM)
         STATS["connected"] = True
         print(f"LIVE admitted by the relay", flush=True)

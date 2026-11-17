@@ -1,6 +1,6 @@
 # MIT. Copyright (c) 2026-present K. S. Ernest (iFire) Lee
-# The relay's Mixer mode, end to end, over HTTP/3 WebTransport, on the closed relay (tools/zt_stack.py must be running).
-#   MB_PORT MB_CERT MB_ZT_MINTER come from zt_stack.py.  python tools/relay_session_check.py
+# The relay's Mixer mode, end to end, over HTTP/3 WebTransport, on the closed relay (mixer/broadcaster/tools/zt_stack.py must be running).
+#   MB_PORT MB_CERT MB_ZT_MINTER come from zt_stack.py.  python mixer/broadcaster/tools/relay_session_check.py
 #
 #   a  token for rooms m1 and m2: creates m1, stores a 6 KB command (by digest through the SeaweedFS filer) and a pose
 #   b  token for m1: joins late, must be replayed the command and the pose, then hear a live pose
@@ -11,7 +11,7 @@ import os
 import struct
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, os.path.dirname(__file__))
 import zt  # noqa: E402
 from mixer.broadcaster import common, entity  # noqa: E402

@@ -1,6 +1,6 @@
 # MIT. Copyright (c) 2026-present K. S. Ernest (iFire) Lee
 # An admitted client of the relay's Mixer mode that joins a room and prints how each entity's pose changes.
-#   MB_PORT MB_CERT MB_ZT_MINTER  python tools/relay_listen.py ROOM SECONDS
+#   MB_PORT MB_CERT MB_ZT_MINTER  python mixer/broadcaster/tools/relay_listen.py ROOM SECONDS
 import asyncio
 import base64
 import os
@@ -8,7 +8,7 @@ import struct
 import sys
 import time
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, os.path.dirname(__file__))
 import zt  # noqa: E402
 from mixer.broadcaster import common  # noqa: E402
