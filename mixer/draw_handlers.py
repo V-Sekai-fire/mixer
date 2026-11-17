@@ -107,7 +107,7 @@ def joining_percentage_draw():
     point_size = bpy.context.area.height * 10
 
     blf.position(0, 32, 32, 0)
-    blf.size(0, point_size, 1)
+    _font_size(point_size, 1)
     blf.color(0, 1, 0, 1, 1.0)
 
     blf.draw(0, f"{props.joining_percentage * 100:.2f} % (Mixer Join)")
@@ -119,18 +119,14 @@ def users_frustrum_draw():
     if not prefs.display_frustums_gizmos or share_data.client.current_room is None:
         return
 
-    import bgl
     import gpu
     from gpu_extras.batch import batch_for_shader
 
-    shader = gpu.shader.from_builtin("3D_UNIFORM_COLOR")
+    shader = _uniform_color_shader()
     shader.bind()
 
-    bgl.glLineWidth(1.5)
-    bgl.glEnable(bgl.GL_DEPTH_TEST)
-    bgl.glEnable(bgl.GL_BLEND)
-    bgl.glEnable(bgl.GL_LINE_SMOOTH)
-    bgl.glPointSize(4)
+    _draw_state(line_width=1.5)
+    _draw_state(point_size=4)
 
     indices = ((1, 2), (2, 3), (3, 4), (4, 1), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5))
 
@@ -211,8 +207,39 @@ def users_frustrum_draw_iteration(per_user_callback, per_frustum_callback):
                 per_frustum_callback(user_dict, frustum)
 
 
+def _font_size(size, dpi):
+    """`blf.size` took a dpi until Blender 4.0 and does not any more."""
+    import blf
+
+    try:
+        blf.size(0, size)
+    except TypeError:
+        blf.size(0, size, dpi)
+
+
+def _uniform_color_shader():
+    """The flat colour shader: `3D_UNIFORM_COLOR` before Blender 5, `UNIFORM_COLOR` since."""
+    import gpu
+
+    try:
+        return gpu.shader.from_builtin("UNIFORM_COLOR")
+    except ValueError:
+        return gpu.shader.from_builtin("3D_UNIFORM_COLOR")
+
+
+def _draw_state(line_width=None, point_size=None):
+    """Depth test, blending and sizes for the gizmos. `bgl` is gone from Blender 5, `gpu.state` is its replacement."""
+    import gpu
+
+    if line_width is not None:
+        gpu.state.line_width_set(line_width)
+    if point_size is not None:
+        gpu.state.point_size_set(point_size)
+    gpu.state.depth_test_set("LESS_EQUAL")
+    gpu.state.blend_set("ALPHA")
+
+
 def users_selection_draw():
-    import bgl
     import gpu
     from gpu_extras.batch import batch_for_shader
 
@@ -221,13 +248,10 @@ def users_selection_draw():
     if not prefs.display_selections_gizmos or share_data.client.current_room is None:
         return
 
-    shader = gpu.shader.from_builtin("3D_UNIFORM_COLOR")
+    shader = _uniform_color_shader()
     shader.bind()
 
-    bgl.glLineWidth(1.5)
-    bgl.glEnable(bgl.GL_DEPTH_TEST)
-    bgl.glEnable(bgl.GL_BLEND)
-    bgl.glEnable(bgl.GL_LINE_SMOOTH)
+    _draw_state(line_width=1.5)
 
     indices = ((0, 1), (1, 2), (2, 3), (0, 3), (4, 5), (5, 6), (6, 7), (4, 7), (0, 4), (1, 5), (2, 6), (3, 7))
 
@@ -337,7 +361,7 @@ def draw_user_name(user_dict, coord_3d):
     if text_coords is None:
         return  # Sometimes happen, maybe due to mathematical precision issues or incoherencies
     blf.position(0, text_coords[0], text_coords[1] + 10, 0)
-    blf.size(0, 16, 72)
+    _font_size(16, 72)
     user_color = user_dict.get(ClientAttributes.USERCOLOR, DEFAULT_COLOR)
     blf.color(0, user_color[0], user_color[1], user_color[2], 1.0)
 

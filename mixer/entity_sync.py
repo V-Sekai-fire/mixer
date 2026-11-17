@@ -16,6 +16,7 @@ from typing import Any, Dict
 
 import bpy
 
+from mixer import relay_log
 from mixer.broadcaster import common, entity, geo_publish
 from mixer.broadcaster.common import MessageType
 from mixer.share_data import share_data
@@ -23,6 +24,7 @@ from mixer.share_data import share_data
 logger = logging.getLogger(__name__)
 
 _digests: Dict[str, bytes] = {}  # object name -> digest of the mesh last published
+_logged: Dict[int, tuple] = {}  # gid -> position last written to the log
 _announced: Dict[int, str] = {}  # gid -> object name, for the objects whose pose we have sent
 _hlc = [0, 0]
 
@@ -61,8 +63,12 @@ def _mesh_digest(ob_evaluated: Any, name: str, geometry_changed: bool) -> bytes:
             pts = [tuple(v.co) for v in mesh.vertices]
             tris = [tuple(t.vertices) for t in mesh.loop_triangles]
             _digests[name] = geo_publish.publish(geo_publish.usda(name, pts, tris), desync, filer)
+            relay_log.note(
+                f"published mesh of {name}: {len(pts)} points, {len(tris)} triangles, digest {_digests[name].hex()[:8]}"
+            )
         except Exception:
             logger.exception("could not publish the mesh of %s", name)
+            relay_log.note(f"could not publish the mesh of {name}")
         finally:
             ob_evaluated.to_mesh_clear()
     return _digests.get(name, bytes(entity.DIGEST_LEN))
@@ -74,6 +80,10 @@ def send_pose(ob_evaluated: Any, name: str, geometry_changed: bool = False) -> N
     digest = _mesh_digest(ob_evaluated, name, geometry_changed)
     pose = entity.pose_entity(gid, tuple(loc), tuple(quat), tuple(scale), _next_hlc(), digest=digest)
     _announced[gid] = name
+    last = _logged.get(gid)
+    if last is None or sum((a - b) ** 2 for a, b in zip(last, loc)) > 1e-4:
+        _logged[gid] = tuple(loc)
+        relay_log.note(f"sent {name} at ({loc[0]:.2f}, {loc[1]:.2f}, {loc[2]:.2f})")
     share_data.client.add_command(common.Command(MessageType.ENTITY_STATE, pose.pack()))
 
 
@@ -89,9 +99,11 @@ def on_depsgraph(depsgraph: Any) -> None:
     for gid, name in list(_announced.items()):
         if name not in names:
             del _announced[gid]
+            relay_log.note(f"removed {name}")
             share_data.client.add_command(common.Command(MessageType.ENTITY_REMOVE, gid.to_bytes(4, "little")))
 
 
 def reset() -> None:
     _announced.clear()
+    _logged.clear()
     _digests.clear()

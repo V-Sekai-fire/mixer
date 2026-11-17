@@ -59,6 +59,9 @@ if os.environ.get("LIVE_DEBUG") == "1":
     _rt.RelayTransport.read_all, _rt.RelayTransport.write = _read, _write
 
 connection.connect()
+from mixer import relay_log  # noqa: E402
+
+relay_log.note(f"connected to the relay: {connection.is_client_connected()}")
 print("ADDON connected to the relay:", connection.is_client_connected(), flush=True)
 
 
@@ -74,7 +77,17 @@ def pump(seconds):
 pump(1.0)
 connection.join_room(ROOM, vrtist_protocol=os.environ.get("VRTIST", "0") == "1")
 pump(1.5)
+relay_log.note(f"joined room {share_data.client.current_room}")
 print("ADDON joined:", share_data.client.current_room, flush=True)
+
+if os.environ.get("LIVE_GUI") == "1":
+    # A window: the add-on's own timer pumps the network from here on. Touch each object once so its pose and mesh go out.
+    if not bpy.data.objects:  # a fresh Blender 5 scene is empty
+        bpy.ops.mesh.primitive_monkey_add(size=1.5, location=(0, 0, 0))
+    for ob in bpy.data.objects:
+        ob.location = ob.location
+    bpy.context.view_layer.update()
+    print("ADDON window open; edit objects and the room follows", flush=True)
 
 if os.environ.get("LIVE_MOVE") == "1":
     if not bpy.data.objects:  # --background starts with an empty scene

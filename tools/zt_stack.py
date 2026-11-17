@@ -111,6 +111,7 @@ def keychain_key(account):
     return key
 
 
+RELAY_PORT = [4466]
 ROOT, TP = keychain_key("root"), keychain_key("third-party")
 TTL = 3600
 
@@ -149,7 +150,33 @@ def mint(room, key_b64, ops=()):  # room: one name, or a list of names for a tok
     raise RuntimeError("mint failed")
 
 
+def cert_sha256():
+    import ssl
+
+    pem = open(os.path.join(tempfile.gettempdir(), "mb_relay_cert", "cert.pem")).read()
+    return list(hashlib.sha256(ssl.PEM_cert_to_DER_cert(pem)).digest())
+
+
 class Minter(BaseHTTPRequestHandler):
+    # The test viewer page is served from here (same origin as /mint), with the relay's address and certificate hash.
+    def do_GET(self):
+        if self.path.split("?")[0] == "/connection":
+            data, kind = (
+                json.dumps({"wt_port": RELAY_PORT[0], "cert_sha256": cert_sha256()}).encode(),
+                "application/json",
+            )
+        elif self.path.split("?")[0] in ("/", "/live.html"):
+            data, kind = open(os.path.join(BROADCASTER, "priv", "static", "live.html"), "rb").read(), "text/html"
+        else:
+            self.send_response(404)
+            self.end_headers()
+            return
+        self.send_response(200)
+        self.send_header("content-type", kind)
+        self.send_header("content-length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     def do_POST(self):
         try:
             n = int(self.headers.get("content-length", "0"))
@@ -179,9 +206,18 @@ def main():
     ap.add_argument("--port", type=int, default=4466)
     ap.add_argument("--minter-port", type=int, default=4467)
     a = ap.parse_args()
+    RELAY_PORT[0] = a.port
     srv = ThreadingHTTPServer(("127.0.0.1", a.minter_port), Minter)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
-    env = dict(os.environ, MB_SERVE="1", MB_ROOT_KEY=ROOT, MB_WT_PORT=str(a.port), MB_BIND="127.0.0.1", MIX_ENV="dev")
+    env = dict(
+        os.environ,
+        MB_SERVE="1",
+        MB_ROOT_KEY=ROOT,
+        MB_WT_PORT=str(a.port),
+        MB_BIND="127.0.0.1",
+        MIX_ENV="dev",
+        MB_ORIGINS=f"http://127.0.0.1:{a.minter_port},http://localhost:{a.minter_port}",
+    )  # the test page is served by the minter
     env.pop("MB_TP_KEY", None)  # the relay never sees the third-party key
     relay = subprocess.Popen(
         ["mix", "run", "--no-halt"],
