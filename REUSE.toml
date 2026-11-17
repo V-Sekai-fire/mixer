@@ -4,7 +4,15 @@ SPDX-PackageDownloadLocation = "https://github.com/V-Sekai-fire/mixer"
 
 # Most files carry a prose notice, not an SPDX tag, so REUSE reads them from here (generated from the notices
 # and the first commit of each file). Only licence texts count: a file notice here grants "version 2 of the License, or
-# (at your option) any later version" (GPL-2.0-or-later); the LICENSE file is the GPLv3 text (GPL-3.0-only). Ubisoft's README is not used.
+# (at your option) any later version" (GPL-2.0-or-later); the LICENSE file is the GPLv3 text (GPL-3.0-only). Rule kept on purpose: files under mixer/broadcaster/ with no notice are MIT, as the notices in that package are.
+
+# The MIT files of mixer.broadcaster descend from Ubisoft's MIT broadcaster. This glob comes first, so the per-file
+# entries below (notice-bearing files and ours) win over it; it fills only a file under mixer/broadcaster/ with no entry.
+[[annotations]]
+path = "mixer/broadcaster/**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2020 Ubisoft"
+SPDX-License-Identifier = "MIT"
 
 # A notice in the file names this licence; kept as written.
 [[annotations]]
