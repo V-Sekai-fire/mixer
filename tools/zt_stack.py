@@ -239,8 +239,10 @@ def main():
             relay.kill()
             sys.exit(1)
     try:
-        for line in relay.stdout:  # keep draining so the relay never blocks on a full pipe
-            pass
+        with open(os.path.join(tempfile.gettempdir(), "relay.log"), "a") as log:
+            for line in relay.stdout:  # keep draining so the relay never blocks on a full pipe; keep it for the error
+                log.write(line)
+                log.flush()
     except KeyboardInterrupt:
         pass
     finally:

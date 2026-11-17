@@ -9,6 +9,7 @@ import hashlib
 import hmac
 import http.client
 import os
+import urllib.error
 import urllib.parse
 import urllib.request
 from typing import Dict, Optional, cast
@@ -61,3 +62,15 @@ def put(endpoint: str, bucket: str, key: str, data: bytes) -> None:
 def get(endpoint: str, bucket: str, key: str) -> bytes:
     data: bytes = _request("GET", endpoint, bucket, key).read()
     return data
+
+
+def exists(endpoint: str, bucket: str, key: str) -> bool:
+    """Is the object there? A blob or index is named by its bytes, so one that exists need not be written again; an
+    overwrite leaves the old copy as garbage in the store until it is vacuumed."""
+    try:
+        _request("HEAD", endpoint, bucket, key).read()
+        return True
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return False
+        raise

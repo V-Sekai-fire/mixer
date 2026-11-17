@@ -88,6 +88,35 @@ if os.environ.get("LIVE_GUI") == "1":
         ob.location = ob.location
     bpy.context.view_layer.update()
     print("ADDON window open; edit objects and the room follows", flush=True)
+    if os.environ.get("LIVE_GUI_CRUD") == "1":
+        # A check: create, change and delete one object on a schedule, through the same data the operator edits, so the
+        # add-on's own depsgraph handler sends every step. Each step is printed with its time.
+        import time
+
+        _c0 = time.monotonic()
+        _steps = iter(
+            [
+                (4.0, "create Probe", lambda: bpy.ops.mesh.primitive_cube_add(size=1.0, location=(-2.0, 1.5, 0.0))),
+                (8.0, "move Probe", lambda: setattr(bpy.data.objects["Cube"], "location", (2.0, 1.5, 0.0))),
+                (12.0, "delete Probe", lambda: bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)),
+                (16.0, "create Probe again", lambda: bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0.0, 2.0, 0.0))),
+            ]
+        )
+        _next = [next(_steps, None)]
+
+        def _crud():
+            while _next[0] is not None and time.monotonic() - _c0 >= _next[0][0]:
+                at, what, fn = _next[0]
+                try:
+                    fn()
+                    print(f"CRUD {at:5.1f}s {what}", flush=True)
+                except Exception as e:  # a check must say what failed
+                    print(f"CRUD {at:5.1f}s {what} FAILED {e}", flush=True)
+                _next[0] = next(_steps, None)
+            return 0.2
+
+        bpy.app.timers.register(_crud, persistent=True)
+
     if os.environ.get("LIVE_GUI_MOVE") == "1":
         # A check, not the demo: slide the active object along X so a viewer can be watched without a hand on the mouse.
         import math

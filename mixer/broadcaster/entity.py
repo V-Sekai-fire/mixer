@@ -232,11 +232,13 @@ def pose_entity(
 #   sub_index    (used << 16) | type: the command type (1..65535, not 210, the pose) and how many bytes of the run are used
 #   the run      byte 0 = 0 (inline): bytes 1..used are the data, so inline data is up to 77 bytes
 #                byte 0 = 1 (by digest): bytes 1..33 the digest the data is stored under, bytes 33..36 its length
-#                (u24, little endian); the rest zero. Larger data goes to the chunk store (SeaweedFS, through desync).
+#                (u24, little endian); the rest zero.
+#                byte 0 = 2 (by index): bytes 1..33 the SHA-256 of a desync index of the data, which is chunked into the
+#                store the way a mesh is; no length (the index has it), for data over 16 MiB. The relay never reads it.
 # Unused bytes are zero: the wire is zstd and run-length coded, so they cost almost nothing.
 
 import hashlib as _hashlib
-from typing import Callable, Tuple as _Tuple
+from typing import Callable, Optional, Tuple as _Tuple
 
 POSE = 210
 CLASS_COMMAND = 128  # EntityPacket.Class.command
@@ -244,7 +246,7 @@ DATA_A = (4, 36)  # offset, length: EntityPacket.COMMAND_DATA_A_*
 DATA_B = (56, 42)
 RUN_LEN = DATA_A[1] + DATA_B[1]  # 78
 INLINE_MAX = RUN_LEN - 1
-MODE_INLINE, MODE_DIGEST = 0, 1
+MODE_INLINE, MODE_DIGEST, MODE_INDEX = 0, 1, 2  # inline; the data's SHA-256 (under 16 MiB); a desync index's SHA-256
 MAX_BULK = (1 << 24) - 1
 
 
@@ -262,18 +264,30 @@ def _split_run(run: bytes) -> _Tuple[bytes, bytes]:
     return run[: DATA_A[1]], run[DATA_A[1] :]
 
 
-def pack_command(command_type: int, data: bytes, owner: int, store: Callable[[bytes], bytes], hlc: int = 0) -> bytes:
+def pack_command(
+    command_type: int,
+    data: bytes,
+    owner: int,
+    store: Callable[[bytes], bytes],
+    hlc: int = 0,
+    store_index: Optional[Callable[[bytes], bytes]] = None,
+) -> bytes:
     """A command as 100 bytes. `store(data) -> digest` puts bulk data in the chunk store; it is called only when the
-    data does not fit inside the packet."""
+    data does not fit inside the packet. Over 16 MiB, `store_index(data) -> digest of the desync index` is used instead."""
     if not 1 <= command_type <= 0xFFFF or command_type == POSE:
         raise ValueError("this message type does not ride as a command")
     if not 0 <= owner < (1 << 24):
         raise ValueError("owner is 24 bits")
     if len(data) <= INLINE_MAX:
         run, used = bytes([MODE_INLINE]) + data, 1 + len(data)
+    elif len(data) > MAX_BULK:
+        if store_index is None:
+            raise ValueError("a command's data is under 16 MiB unless it can go by desync index")
+        digest = store_index(data)
+        if len(digest) != DIGEST_LEN:
+            raise ValueError("a digest is 32 bytes")
+        run, used = bytes([MODE_INDEX]) + digest, 1 + DIGEST_LEN
     else:
-        if len(data) > MAX_BULK:
-            raise ValueError("a command's data is under 16 MiB")
         digest = store(data)
         if len(digest) != DIGEST_LEN:
             raise ValueError("a digest is 32 bytes")
@@ -290,8 +304,11 @@ def pack_command(command_type: int, data: bytes, owner: int, store: Callable[[by
     return bytes(out)
 
 
-def unpack_command(raw: bytes, fetch: Callable[[bytes], bytes]) -> _Tuple[int, int, bytes]:
-    """(command type, owner, data). `fetch(digest) -> data` reads bulk data back; the length must match."""
+def unpack_command(
+    raw: bytes, fetch: Callable[[bytes], bytes], fetch_index: Optional[Callable[[bytes], bytes]] = None
+) -> _Tuple[int, int, bytes]:
+    """(command type, owner, data). `fetch(digest) -> data` reads bulk data back; the length must match.
+    `fetch_index(digest) -> data` reads data named by a desync index (mode 2)."""
     if len(raw) != PACKET_SIZE:
         raise ValueError("a packet is 100 bytes")
     class_owner = int.from_bytes(raw[48:52], "little")
@@ -315,6 +332,12 @@ def unpack_command(raw: bytes, fetch: Callable[[bytes], bytes]) -> _Tuple[int, i
         data = fetch(bytes(run[1:33]))
         if len(data) != length:
             raise ValueError("the stored data is not the length the packet says")
+    elif run[0] == MODE_INDEX:
+        if used != 1 + DIGEST_LEN:
+            raise ValueError("a malformed command by index")
+        if fetch_index is None:
+            raise ValueError("a command by index needs a way to read an index")
+        data = fetch_index(bytes(run[1:33]))
     else:
         raise ValueError("unknown command mode")
     return command_type, owner, data
