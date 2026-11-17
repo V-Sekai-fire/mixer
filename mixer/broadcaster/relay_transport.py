@@ -109,7 +109,7 @@ class RelayTransport:
         while True:
             await asyncio.sleep(KEEPALIVE_SECONDS)
             uid += 1
-            client.ping(uid)
+            client.send_keepalive(uid)
 
     async def _pump_poses(self, client: "RelayClient") -> None:
         while True:

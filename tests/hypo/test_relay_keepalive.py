@@ -19,7 +19,7 @@ class FakeClient:
     def __init__(self):
         self.pings = []
 
-    def ping(self, uid):
+    def send_keepalive(self, uid):
         self.pings.append(uid)
 
 

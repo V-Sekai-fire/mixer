@@ -197,7 +197,7 @@ class RelayClient(QuicConnectionProtocol):
     def _sent(self, raw: Optional[bytes], queued: bool = True) -> None:
         if queued:
             self._uploading -= 1
-        if raw is not None:
+        if raw is not None and self._packet_stream is not None:
             self._quic.send_stream_data(self._packet_stream, raw)
             self.transmit()
 
@@ -213,7 +213,7 @@ class RelayClient(QuicConnectionProtocol):
         self.h3.send_datagram(self._session(), packet)
         self.transmit()
 
-    def ping(self, uid: int) -> None:
+    def send_keepalive(self, uid: int) -> None:
         """A QUIC PING frame: the relay sees traffic and keeps the session."""
         self._quic.send_ping(uid)
         self.transmit()

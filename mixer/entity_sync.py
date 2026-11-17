@@ -140,11 +140,11 @@ def _mesh_pieces(ob_evaluated: Any, name: str, geometry_changed: bool) -> list:
 _applied: Dict[int, tuple] = {}  # gid -> (pos, rot, scale) of the last pose from the room, so it is not sent back
 
 
-def _fields(e) -> tuple:
+def _fields(e: Any) -> tuple:
     return (e.pos, e.rot, e.payload[entity.DIGEST_LEN :])
 
 
-def _same(a, b) -> bool:
+def _same(a: Any, b: Any) -> bool:
     """Two (pos, rot, scale) the same pose to within the wire's own rounding (2 um, 2 rotation codes, 2 scale steps)."""
     if a is None:
         return False
@@ -215,7 +215,7 @@ def on_depsgraph(depsgraph: Any) -> None:
 _matrices: Dict[str, tuple] = {}  # object name -> the world matrix last seen while an animation played
 
 
-def on_frame_change(scene, depsgraph=None) -> None:
+def on_frame_change(scene: Any, depsgraph: Any = None) -> None:
     """A frame changed (playback, scrubbing, a frame set by script). Blender calls no depsgraph handler for that, so
     the poses of what moved are sent here. Only a changed world matrix is sent, and never a mesh: the digest of the mesh
     last published stays in the pose, so playback costs one packet per moving object and no upload."""
