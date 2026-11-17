@@ -1,0 +1,4 @@
+[submodule "third_party/mixer-broadcaster"]
+	path = third_party/mixer-broadcaster
+	url = https://github.com/V-Sekai-fire/mixer-broadcaster.git
+	branch = dev/presign

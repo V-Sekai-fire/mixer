@@ -28,6 +28,8 @@ import queue
 import threading
 from typing import TYPE_CHECKING, Callable, List, Optional, Tuple
 
+KEEPALIVE_SECONDS = 5.0
+
 from mixer.broadcaster import common
 from mixer.broadcaster.common import MessageType
 
@@ -85,6 +87,7 @@ class RelayTransport:
             pumps = [
                 asyncio.ensure_future(self._pump_commands(client)),
                 asyncio.ensure_future(self._pump_poses(client)),
+                asyncio.ensure_future(self._keepalive(client)),
             ]
             await stop
             for p in pumps:
@@ -98,6 +101,15 @@ class RelayTransport:
                 self._incoming.put(common.Command(MessageType(t), data))
             except ValueError:  # a type this build does not know: dropped, as the Python server's clients drop it
                 logger.warning("unknown command type %s dropped", t)
+
+    async def _keepalive(self, client: "RelayClient") -> None:
+        """QUIC closes a quiet session (the relay's idle timeout), and an editor is quiet between edits: ping every few
+        seconds so the session is still there when the next move comes."""
+        uid = 0
+        while True:
+            await asyncio.sleep(KEEPALIVE_SECONDS)
+            uid += 1
+            client.send_keepalive(uid)
 
     async def _pump_poses(self, client: "RelayClient") -> None:
         while True:

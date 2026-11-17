@@ -59,6 +59,9 @@ if os.environ.get("LIVE_DEBUG") == "1":
     _rt.RelayTransport.read_all, _rt.RelayTransport.write = _read, _write
 
 connection.connect()
+from mixer import relay_log  # noqa: E402
+
+relay_log.note(f"connected to the relay: {connection.is_client_connected()}")
 print("ADDON connected to the relay:", connection.is_client_connected(), flush=True)
 
 
@@ -74,7 +77,64 @@ def pump(seconds):
 pump(1.0)
 connection.join_room(ROOM, vrtist_protocol=os.environ.get("VRTIST", "0") == "1")
 pump(1.5)
+relay_log.note(f"joined room {share_data.client.current_room}")
 print("ADDON joined:", share_data.client.current_room, flush=True)
+
+if os.environ.get("LIVE_GUI") == "1":
+    # A window: the add-on's own timer pumps the network from here on. Touch each object once so its pose and mesh go out.
+    if not bpy.data.objects:  # a fresh Blender 5 scene is empty
+        bpy.ops.mesh.primitive_monkey_add(size=1.5, location=(0, 0, 0))
+    for ob in bpy.data.objects:
+        ob.location = ob.location
+    bpy.context.view_layer.update()
+    print("ADDON window open; edit objects and the room follows", flush=True)
+    if os.environ.get("LIVE_GUI_CRUD") == "1":
+        # A check: create, change and delete one object on a schedule, through the same data the operator edits, so the
+        # add-on's own depsgraph handler sends every step. Each step is printed with its time.
+        import time
+
+        _c0 = time.monotonic()
+        _steps = iter(
+            [
+                (4.0, "create Probe", lambda: bpy.ops.mesh.primitive_cube_add(size=1.0, location=(-2.0, 1.5, 0.0))),
+                (8.0, "move Probe", lambda: setattr(bpy.data.objects["Cube"], "location", (2.0, 1.5, 0.0))),
+                (12.0, "delete Probe", lambda: bpy.data.objects.remove(bpy.data.objects["Cube"], do_unlink=True)),
+                (
+                    16.0,
+                    "create Probe again",
+                    lambda: bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0.0, 2.0, 0.0)),
+                ),
+            ]
+        )
+        _next = [next(_steps, None)]
+
+        def _crud():
+            while _next[0] is not None and time.monotonic() - _c0 >= _next[0][0]:
+                at, what, fn = _next[0]
+                try:
+                    fn()
+                    print(f"CRUD {at:5.1f}s {what}", flush=True)
+                except Exception as e:  # a check must say what failed
+                    print(f"CRUD {at:5.1f}s {what} FAILED {e}", flush=True)
+                _next[0] = next(_steps, None)
+            return 0.2
+
+        bpy.app.timers.register(_crud, persistent=True)
+
+    if os.environ.get("LIVE_GUI_MOVE") == "1":
+        # A check, not the demo: slide the active object along X so a viewer can be watched without a hand on the mouse.
+        import math
+        import time
+
+        _t0 = time.monotonic()
+
+        def _slide():
+            ob = bpy.context.view_layer.objects.active or (bpy.data.objects[0] if bpy.data.objects else None)
+            if ob is not None:
+                ob.location.x = 2.5 * math.sin((time.monotonic() - _t0) * 0.8)
+            return 0.1
+
+        bpy.app.timers.register(_slide, persistent=True)
 
 if os.environ.get("LIVE_MOVE") == "1":
     if not bpy.data.objects:  # --background starts with an empty scene

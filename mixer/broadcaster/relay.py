@@ -25,9 +25,11 @@ A client of the relay's Mixer mode (`/mixer`). No `bpy`, no `mixer.*` import: th
 """
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import base64
 import hashlib
 import json
+import os
 import time
 import urllib.request
 from typing import Any, AsyncContextManager, Awaitable, Callable, Dict, List, Optional, Tuple, cast
@@ -38,7 +40,7 @@ from aioquic.h3.events import DatagramReceived, HeadersReceived, WebTransportStr
 from aioquic.quic.configuration import QuicConfiguration
 from aioquic.quic.events import QuicEvent
 
-from . import entity, s3
+from . import entity, geo_publish, s3
 
 PATH = b"/mixer"
 
@@ -56,8 +58,23 @@ class S3Store:
 
     def put(self, data: bytes) -> bytes:
         digest = hashlib.sha256(data).digest()
-        s3.put(self.endpoint, self.bucket, f"blob/{digest.hex()}", data)
+        key = f"blob/{digest.hex()}"
+        if not s3.exists(self.endpoint, self.bucket, key):  # named by its bytes: never written twice
+            s3.put(self.endpoint, self.bucket, key, data)
         return digest
+
+    def put_index(self, data: bytes) -> bytes:
+        """Data over 16 MiB: chunked with desync as a mesh is, named by the SHA-256 of its index (env `MB_DESYNC`)."""
+        desync = os.environ.get("MB_DESYNC")
+        if not desync:
+            raise ValueError("a command over 16 MiB needs the desync binary (set MB_DESYNC)")
+        return geo_publish.publish(data, desync, self.endpoint, self.bucket)
+
+    def get_index(self, digest: bytes) -> bytes:
+        desync = os.environ.get("MB_DESYNC")
+        if not desync:
+            raise ValueError("a command over 16 MiB needs the desync binary (set MB_DESYNC)")
+        return geo_publish.extract(digest, desync, self.endpoint, self.bucket)
 
     def get(self, digest: bytes) -> bytes:
         data = s3.get(self.endpoint, self.bucket, f"blob/{digest.hex()}")
@@ -73,6 +90,9 @@ class RelayClient(QuicConnectionProtocol):
         self.session: Optional[int] = None
         self.store = S3Store()
         self.owner = 0
+        self._uploading = 0  # commands waiting on, or in, the upload worker
+        self._worker = ThreadPoolExecutor(max_workers=1, thread_name_prefix="mixer-upload")
+        self._refused: set = set()  # (type, size) of commands refused as too big, so each is reported once
         self.commands: "asyncio.Queue[Tuple[int, int, bytes]]" = asyncio.Queue()  # (type, owner, data)
         self.poses: "asyncio.Queue[bytes]" = asyncio.Queue()
         self.errors: List[str] = []
@@ -102,7 +122,7 @@ class RelayClient(QuicConnectionProtocol):
             raw = bytes(self._inbuf[: entity.PACKET_SIZE])
             del self._inbuf[: entity.PACKET_SIZE]
             try:
-                self.commands.put_nowait(entity.unpack_command(raw, self.store.get))
+                self.commands.put_nowait(entity.unpack_command(raw, self.store.get, self.store.get_index))
             except (ValueError, OSError) as err:
                 self.errors.append(str(err))
 
@@ -141,17 +161,61 @@ class RelayClient(QuicConnectionProtocol):
         return (int(time.time() * 1000) << 16) | self._hlc_counter
 
     def send_command(self, command_type: int, data: bytes) -> None:
-        """One Mixer command as a packet. Data over 77 bytes goes to the chunk store first."""
+        """One Mixer command as a packet. Data over 77 bytes goes to the chunk store first, and that upload (slow, and
+        capped by the uplink) runs on one worker thread, never on the network loop, so poses and animation keep flowing.
+        Commands keep their order: while one is uploading, later ones wait behind it."""
         if self._packet_stream is None:
             self._packet_stream = self.h3.create_webtransport_stream(self._session())
-        raw = entity.pack_command(command_type, data, self.owner, self.store.put, self._hlc())
-        self._quic.send_stream_data(self._packet_stream, raw)
-        self.transmit()
+        if len(data) <= entity.INLINE_MAX and self._uploading == 0:
+            self._emit(command_type, data)
+            return
+        self._uploading += 1
+        loop = asyncio.get_running_loop()
+        hlc = self._hlc()  # stamped here, on the loop: the clock is not shared with the worker
+
+        def work() -> None:
+            try:
+                raw = self._pack(command_type, data, hlc)
+            except Exception as e:  # said once per type and size; the loop is not told
+                loop.call_soon_threadsafe(self._refuse, command_type, len(data), e)
+                raw = None
+            loop.call_soon_threadsafe(self._sent, raw)
+
+        self._worker.submit(work)
+
+    def _pack(self, command_type: int, data: bytes, hlc: int) -> bytes:
+        return entity.pack_command(command_type, data, self.owner, self.store.put, hlc, self.store.put_index)
+
+    def _emit(self, command_type: int, data: bytes) -> None:
+        try:
+            raw = self._pack(command_type, data, self._hlc())
+        except ValueError as e:
+            self._refuse(command_type, len(data), e)
+            return
+        self._sent(raw, queued=False)
+
+    def _sent(self, raw: Optional[bytes], queued: bool = True) -> None:
+        if queued:
+            self._uploading -= 1
+        if raw is not None and self._packet_stream is not None:
+            self._quic.send_stream_data(self._packet_stream, raw)
+            self.transmit()
+
+    def _refuse(self, command_type: int, size: int, e: Exception) -> None:
+        key = (command_type, size)
+        if key not in self._refused:
+            self._refused.add(key)
+            self.errors.append(f"command type {command_type}, {size / 1048576:.1f} MiB, not sent: {e}")
 
     def send_pose(self, packet: bytes) -> None:
         if len(packet) != entity.PACKET_SIZE:
             raise ValueError("a pose is one 100-byte packet")
         self.h3.send_datagram(self._session(), packet)
+        self.transmit()
+
+    def send_keepalive(self, uid: int) -> None:
+        """A QUIC PING frame: the relay sees traffic and keeps the session."""
+        self._quic.send_ping(uid)
         self.transmit()
 
     async def next_command(self, timeout: float = 5.0) -> Tuple[int, int, bytes]:
