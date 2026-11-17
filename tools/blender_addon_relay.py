@@ -88,6 +88,20 @@ if os.environ.get("LIVE_GUI") == "1":
         ob.location = ob.location
     bpy.context.view_layer.update()
     print("ADDON window open; edit objects and the room follows", flush=True)
+    if os.environ.get("LIVE_GUI_MOVE") == "1":
+        # A check, not the demo: slide the active object along X so a viewer can be watched without a hand on the mouse.
+        import math
+        import time
+
+        _t0 = time.monotonic()
+
+        def _slide():
+            ob = bpy.context.view_layer.objects.active or (bpy.data.objects[0] if bpy.data.objects else None)
+            if ob is not None:
+                ob.location.x = 2.5 * math.sin((time.monotonic() - _t0) * 0.8)
+            return 0.1
+
+        bpy.app.timers.register(_slide, persistent=True)
 
 if os.environ.get("LIVE_MOVE") == "1":
     if not bpy.data.objects:  # --background starts with an empty scene
