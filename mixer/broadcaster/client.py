@@ -27,6 +27,7 @@ from typing import Dict, Any, Mapping, Optional, List, Callable
 
 import mixer.broadcaster.common as common
 from mixer.broadcaster.socket import Socket
+from mixer.broadcaster.relay_transport import RelayTransport
 from mixer.broadcaster.common import MessageType
 from mixer.broadcaster.common import update_attributes_and_get_diff, update_named_attributes
 
@@ -41,6 +42,11 @@ class Client:
     - send commands
     - maintain an updated view of clients and room states from server's inputs
     """
+
+    # Set these to talk to the relay (HTTP/3 WebTransport, `/mixer`) instead of the Python server over TCP:
+    #   relay_cafile: the certificate to trust; relay_credentials: a function returning (token, public key, sign).
+    relay_cafile: Optional[str] = None
+    relay_credentials: Optional[Callable] = None
 
     def __init__(self, host: str = common.DEFAULT_HOST, port: int = common.DEFAULT_PORT):
         self.host = host
@@ -71,17 +77,24 @@ class Client:
             raise RuntimeError("Client.connect : already connected")
 
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket = Socket(sock)
-            self.socket.connect((self.host, self.port))
-            local_address = self.socket.getsockname()
-            logger.info(
-                "Connecting from local %s:%s to %s:%s",
-                local_address[0],
-                local_address[1],
-                self.host,
-                self.port,
-            )
+            if self.relay_cafile is not None:
+                # read through the class: a function stored on it must not become a bound method
+                transport = RelayTransport(self.host, self.port, self.relay_cafile, type(self).relay_credentials)
+                transport.start()
+                self.socket = transport
+                logger.info("Connected to the relay at %s:%s", self.host, self.port)
+            else:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.socket = Socket(sock)
+                self.socket.connect((self.host, self.port))
+                local_address = self.socket.getsockname()
+                logger.info(
+                    "Connecting from local %s:%s to %s:%s",
+                    local_address[0],
+                    local_address[1],
+                    self.host,
+                    self.port,
+                )
             self.send_command(common.Command(common.MessageType.CLIENT_ID))
             self.send_command(common.Command(common.MessageType.LIST_CLIENTS))
             self.send_command(common.Command(common.MessageType.LIST_ROOMS))
@@ -96,8 +109,11 @@ class Client:
 
     def disconnect(self):
         if self.socket:
-            self.socket.shutdown(socket.SHUT_RDWR)
-            self.socket.close()
+            if isinstance(self.socket, RelayTransport):
+                self.socket.close()
+            else:
+                self.socket.shutdown(socket.SHUT_RDWR)
+                self.socket.close()
             self.socket = None
 
     def is_connected(self):
@@ -129,7 +145,10 @@ class Client:
 
     def send_command(self, command: common.Command):
         try:
-            common.write_message(self.socket, command)
+            if isinstance(self.socket, RelayTransport):
+                self.socket.write(command)
+            else:
+                common.write_message(self.socket, command)
             return True
         except common.ClientDisconnectedException:
             self.handle_connection_lost()
@@ -251,7 +270,10 @@ class Client:
         Process those that have a default handler with the one registered.
         """
         try:
-            received_commands = common.read_all_messages(self.socket)
+            if isinstance(self.socket, RelayTransport):
+                received_commands = self.socket.read_all()
+            else:
+                received_commands = common.read_all_messages(self.socket)
         except common.ClientDisconnectedException:
             self.handle_connection_lost()
             raise

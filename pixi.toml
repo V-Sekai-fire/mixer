@@ -14,6 +14,7 @@ black = "*"
 [pypi-dependencies]
 # HTTP/3 + WebTransport (BSD-3-Clause). The only network protocol Mixer speaks.
 aioquic = ">=1.2"
+zstandard = ">=0.25.0, <0.26"
 
 [tasks]
 # Hypothesis is the only test framework; pytest is merely the runner Hypothesis ships a plugin for.

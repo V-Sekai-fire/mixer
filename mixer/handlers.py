@@ -34,6 +34,7 @@ import bpy
 
 from mixer.share_data import share_data, get_object_constraints
 from mixer import handlers_generic as generic
+from mixer import entity_sync
 from mixer.blender_client import collection as collection_api
 from mixer.blender_client import object_ as object_api
 from mixer.blender_client import scene as scene_api
@@ -166,6 +167,9 @@ def handler_send_scene_data_to_server(scene, dummy):
         if share_data.client.block_signals:
             logger.debug("handler_send_scene_data_to_server canceled (block_signals = True)")
             return
+
+        # poses for the relay, from the same change detection (a no-op unless the client is on the relay)
+        entity_sync.on_depsgraph(bpy.context.evaluated_depsgraph_get())
 
         if share_data.use_vrtist_protocol():
             send_scene_data_to_server(scene, dummy)

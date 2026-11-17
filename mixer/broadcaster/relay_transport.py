@@ -1,0 +1,126 @@
+# MIT License
+#
+# Copyright (c) 2026-present K. S. Ernest (iFire) Lee
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+# documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+# persons to whom the Software is furnished to do so, subject to the following conditions:
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+# Software.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+# OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+"""
+What `Client` talks to when it is pointed at the relay instead of the Python server: the same two calls its socket
+had (`write` one command, `read_all` the commands that came in), over `relay.RelayClient` (HTTP/3 WebTransport) run on
+a thread of its own, since Blender's own thread must never wait on the network.
+
+Poses (`ENTITY_STATE`) go out as datagrams and come back as datagrams; every other command is a 100-byte packet.
+`credentials()` returns `(token, public_key, sign)`; the key stays wherever that function keeps it.
+"""
+
+import asyncio
+import logging
+import queue
+import threading
+from typing import Callable, List, Optional, Tuple
+
+from mixer.broadcaster import common
+from mixer.broadcaster.common import MessageType
+
+logger = logging.getLogger(__name__)
+
+Credentials = Callable[[], Tuple[bytes, bytes, Callable[[bytes], bytes]]]
+
+
+class RelayTransport:
+    def __init__(self, host: str, port: int, cafile: str, credentials: Optional[Credentials]) -> None:
+        self.host, self.port, self.cafile, self.credentials = host, port, cafile, credentials
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._thread: Optional[threading.Thread] = None
+        self._client = None
+        self._incoming: "queue.Queue[common.Command]" = queue.Queue()
+        self._started = threading.Event()
+        self._error: Optional[BaseException] = None
+        self._stop: Optional[asyncio.Future] = None
+
+    # ---- life ----
+
+    def start(self, timeout: float = 20.0) -> None:
+        self._thread = threading.Thread(target=self._run, name="mixer-relay", daemon=True)
+        self._thread.start()
+        if not self._started.wait(timeout) or self._error is not None:
+            raise ConnectionError(f"could not join the relay at {self.host}:{self.port}: {self._error}")
+
+    def _run(self) -> None:
+        self._loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self._loop)
+        try:
+            self._loop.run_until_complete(self._main())
+        except BaseException as e:  # reported to start(), or logged if it happens later
+            self._error = e
+            logger.error("relay transport stopped: %s", e)
+        finally:
+            self._started.set()
+            self._loop.close()
+
+    async def _main(self) -> None:
+        from mixer.broadcaster.relay import open_relay
+
+        self._stop = self._loop.create_future()
+        async with open_relay(self.host, self.port, self.cafile) as client:
+            self._client = client
+            if self.credentials is not None:
+                token, pub, sign = await self._loop.run_in_executor(None, self.credentials)
+                await client.login(token, pub, sign)
+            self._started.set()
+            pumps = [
+                asyncio.ensure_future(self._pump_commands(client)),
+                asyncio.ensure_future(self._pump_poses(client)),
+            ]
+            await self._stop
+            for p in pumps:
+                p.cancel()
+            await asyncio.gather(*pumps, return_exceptions=True)
+
+    async def _pump_commands(self, client) -> None:
+        while True:
+            t, _owner, data = await client.commands.get()
+            try:
+                self._incoming.put(common.Command(MessageType(t), data))
+            except ValueError:  # a type this build does not know: dropped, as the Python server's clients drop it
+                logger.warning("unknown command type %s dropped", t)
+
+    async def _pump_poses(self, client) -> None:
+        while True:
+            self._incoming.put(common.Command(MessageType.ENTITY_STATE, await client.poses.get()))
+
+    def close(self) -> None:
+        if self._loop is not None and self._stop is not None and not self._stop.done():
+            self._loop.call_soon_threadsafe(self._stop.set_result, None)
+        if self._thread is not None:
+            self._thread.join(5)
+
+    # ---- the socket's two calls ----
+
+    def write(self, command: common.Command) -> None:
+        if self._client is None or self._loop is None:
+            raise common.ClientDisconnectedException()
+        t, data = int(command.type), command.data
+        if t == MessageType.ENTITY_STATE:
+            self._loop.call_soon_threadsafe(self._client.send_pose, data)
+        else:
+            self._loop.call_soon_threadsafe(self._client.send_command, t, data)
+
+    def read_all(self) -> List[common.Command]:
+        if self._error is not None and self._incoming.empty():
+            raise common.ClientDisconnectedException()
+        out = []
+        while True:
+            try:
+                out.append(self._incoming.get_nowait())
+            except queue.Empty:
+                return out

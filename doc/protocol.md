@@ -309,6 +309,33 @@ Protocol:
 - Occurs after a room has been deleted
 - Server broadcasts `ROOM_DELETED room_name` to all clients
 
+### ENTITY_STATE
+
+One object's pose, scale and mesh, as a single 100-byte entity packet (the layout of
+[contract-entity-packet](https://github.com/V-Sekai-fire/contract-entity-packet), little endian). It is a room command: the server stores
+the last one for each entity and forwards it to the other clients of the room.
+
+| Offset | Field | Type |
+|---|---|---|
+| 0 | gid (entity id) | u32 |
+| 4 | position, micrometres | 3 x i64 |
+| 28 | velocity | 3 x i16 |
+| 34 | acceleration | 3 x i16 |
+| 40 | hybrid logical clock, `(ms << 16) \| counter` | u64 |
+| 48 | class and owner | u32 |
+| 52 | sub index | u32 |
+| 56 | rotation: swing X, swing Z, twist | 3 x i16 |
+| 62 | payload: SHA-256 of the mesh's desync index (32), then scale (4) | 36 bytes |
+| 98 | reserved, zero | 2 bytes |
+
+Scale is three 10-bit log values in a little-endian u32, `2 ** ((v - 512) / 64)` per axis, from 2^-8 to 2^8 in steps of about 1.1%.
+A negative scale (a mirror) is not representable. The codec is `mixer/broadcaster/entity.py` (no `bpy`) and the registered message class is
+`EntityStateMessage` in `mixer/blender_client/messages.py`.
+
+### ENTITY_REMOVE
+
+The entity id (u32, little endian) of an object that is gone.
+
 ### CLIENT_DISCONNECTED
 
 Data:

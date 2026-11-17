@@ -21,8 +21,10 @@ Definition of messages
 Currently used only in tests. Could be used also in all send_xxx() and build_xxx() functions
 """
 
+import struct
 from dataclasses import dataclass
 
+from mixer.broadcaster.entity import Entity
 from mixer.codec import Message, Color, Matrix
 
 
@@ -44,3 +46,29 @@ class LightMessage(Message):
     energy: float
     spot_size: float
     spot_blend: float
+
+
+@dataclass(order=True)
+class EntityStateMessage(Message):
+    """One object's pose, scale and mesh as a 100-byte entity packet (mixer/broadcaster/entity.py)."""
+
+    entity: Entity = None
+
+    def decode(self, buffer: bytes) -> None:
+        self.entity = Entity.unpack(bytes(buffer))
+
+    def encode(self) -> bytes:
+        return self.entity.pack()
+
+
+@dataclass(order=True)
+class EntityRemoveMessage(Message):
+    gid: int = 0
+
+    def decode(self, buffer: bytes) -> None:
+        if len(buffer) != 4:
+            raise ValueError("ENTITY_REMOVE carries one u32")
+        (self.gid,) = struct.unpack("<I", bytes(buffer))
+
+    def encode(self) -> bytes:
+        return struct.pack("<I", self.gid)

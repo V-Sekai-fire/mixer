@@ -158,6 +158,8 @@ class MessageType(IntEnum):
     PLAY = 206
     PAUSE = 207
     WORLD_SKY = 208
+    ENTITY_STATE = 210  # One 100-byte entity packet: an object's pose, scale and mesh (see broadcaster/entity.py)
+    ENTITY_REMOVE = 211  # The entity id (u32, little endian) of an object that is gone
     END_OPTIMIZED_COMMANDS = 999
 
     CLIENT_ID_WRAPPER = 1000
