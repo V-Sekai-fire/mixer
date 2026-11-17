@@ -33,4 +33,6 @@ def get_mixer_props() -> MixerProperties:
 
 
 def get_mixer_prefs() -> MixerPreferences:
-    return bpy.context.preferences.addons[__package__].preferences
+    from mixer import ADDON_ID
+
+    return bpy.context.preferences.addons[ADDON_ID].preferences

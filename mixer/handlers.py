@@ -108,6 +108,7 @@ class HandlerManager:
             if connect:
                 # bpy.app.handlers.frame_change_post.append(handler_send_frame_changed)
                 bpy.app.handlers.depsgraph_update_post.append(handler_send_scene_data_to_server)
+                bpy.app.handlers.frame_change_post.append(handler_relay_frame_changed)
                 bpy.app.handlers.undo_pre.append(handler_on_undo_redo_pre)
                 bpy.app.handlers.redo_pre.append(handler_on_undo_redo_pre)
                 bpy.app.handlers.undo_post.append(handler_on_undo_redo_post)
@@ -115,6 +116,7 @@ class HandlerManager:
             else:
                 # bpy.app.handlers.frame_change_post.remove(handler_send_frame_changed)
                 bpy.app.handlers.depsgraph_update_post.remove(handler_send_scene_data_to_server)
+                bpy.app.handlers.frame_change_post.remove(handler_relay_frame_changed)
                 bpy.app.handlers.undo_pre.remove(handler_on_undo_redo_pre)
                 bpy.app.handlers.redo_pre.remove(handler_on_undo_redo_pre)
                 bpy.app.handlers.undo_post.remove(handler_on_undo_redo_post)
@@ -129,6 +131,11 @@ class HandlerManager:
         if wanted_state != cls._current_state:
             cls._set_handlers(wanted_state)
             cls._current_state = wanted_state
+
+
+@persistent
+def handler_relay_frame_changed(scene, depsgraph=None):
+    entity_sync.on_frame_change(scene, depsgraph)
 
 
 @persistent

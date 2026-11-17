@@ -25,6 +25,7 @@ import random
 
 import bpy
 
+from mixer import ADDON_ID
 from mixer.bl_panels import draw_preferences_ui, update_panels_category
 from mixer.broadcaster import common
 from mixer.broadcaster.common import ClientAttributes
@@ -62,7 +63,7 @@ class MixerPreferences(bpy.types.AddonPreferences):
     A task exists to support keeping preferences of disabled add-ons: https://developer.blender.org/T71486
     """
 
-    bl_idname = __package__
+    bl_idname = ADDON_ID
 
     def on_user_changed(self, context):
         client = share_data.client

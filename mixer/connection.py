@@ -132,6 +132,9 @@ def is_localhost(host):
 
 
 def connect():
+    from mixer import relay_setup
+
+    relay_setup.apply()  # the relay's settings from the environment, read when the preferences exist
     prefs = get_mixer_prefs()
     logger.info(f"connect to {prefs.host}:{prefs.port}")
     if share_data.client is not None:

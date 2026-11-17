@@ -934,6 +934,12 @@ class BlenderClient(Client):
                         )
                         redraw_panels()
 
+                if command.type == MessageType.ENTITY_STATE:  # a pose from the relay, not a Mixer message
+                    from mixer import entity_sync
+
+                    entity_sync.apply_state(command.data)
+                    continue
+
                 if command.type == MessageType.GROUP_BEGIN:
                     groups.append(time.monotonic())
                     continue

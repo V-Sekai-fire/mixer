@@ -26,6 +26,24 @@ import bpy
 logger = logging.getLogger(__name__)
 
 
+# Blender 4.0 renamed some Principled BSDF inputs. The wire still carries the old names.
+_RENAMED_INPUTS = {
+    "Transmission": "Transmission Weight",
+    "Emission": "Emission Color",
+    "Subsurface": "Subsurface Weight",
+    "Specular": "Specular IOR Level",
+    "Sheen": "Sheen Weight",
+    "Clearcoat": "Coat Weight",
+    "Clearcoat Roughness": "Coat Roughness",
+}
+
+
+def _input(principled, name):
+    """The input socket called `name`, or the one that replaced it in newer Blender."""
+    sockets = principled.inputs
+    return sockets[name] if name in sockets else sockets[_RENAMED_INPUTS.get(name, name)]
+
+
 def get_or_create_material(material_name):
     material = share_data.blender_materials.get(material_name)
     if material:
@@ -50,7 +68,7 @@ def build_texture(principled, material, channel, is_color, data, index):
 
     tex_image = None
     for link in material.node_tree.links:
-        if link.to_socket == principled.inputs[channel]:
+        if link.to_socket == _input(principled, channel):
             connected_node = link.from_socket.node
             if connected_node.type == "TEX_IMAGE":
                 tex_image = connected_node
@@ -78,7 +96,7 @@ def build_texture(principled, material, channel, is_color, data, index):
 
     if not is_color:
         tex_image.image.colorspace_settings.name = "Non-Color"
-    material.node_tree.links.new(principled.inputs[channel], tex_image.outputs["Color"])
+    material.node_tree.links.new(_input(principled, channel), tex_image.outputs["Color"])
     return index
 
 
@@ -108,11 +126,11 @@ def build_material(data):
     # Transmission ( 1 - opacity)
     transmission, index = common.decode_float(data, index)
     transmission = 1 - transmission
-    principled.inputs["Transmission"].default_value = transmission
+    _input(principled, "Transmission").default_value = transmission
     file_name, index = common.decode_string(data, index)
     if len(file_name) > 0:
         invert = material.node_tree.nodes.new("ShaderNodeInvert")
-        material.node_tree.links.new(principled.inputs["Transmission"], invert.outputs["Color"])
+        material.node_tree.links.new(_input(principled, "Transmission"), invert.outputs["Color"])
         tex_image = material.node_tree.nodes.new("ShaderNodeTexImage")
         try:
             tex_image.image = bpy.data.images.load(get_resolved_file_path(file_name))
@@ -154,7 +172,7 @@ def build_material(data):
 
     # Emission
     emission, index = common.decode_color(data, index)
-    principled.inputs["Emission"].default_value = emission
+    _input(principled, "Emission").default_value = emission
     index = build_texture(principled, material, "Emission", False, data, index)
 
 
