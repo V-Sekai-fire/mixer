@@ -123,3 +123,17 @@ def test_control_meshlet_cut_loses_nothing_on_a_repeated_triangle():
     t = [(0, 1, 2)] * 6
     pieces = mesh_split.split(p, t, 4)
     assert sorted(i for x in pieces for i in x) == list(range(6)) and all(len(x) <= 4 for x in pieces)
+
+
+@needs_lib
+def test_golden_small_shells_are_meshlet_cut_too():
+    p, t = two_cubes()  # two 12-triangle shells: each is a meshlet, a piece never mixes a meshlet's triangles away
+    calls = []
+    real = meshlets.build
+    meshlets.build = lambda *a, **k: (calls.append(len(a[2])), real(*a, **k))[1]
+    try:
+        pieces = mesh_split.split(p, t, 12)
+    finally:
+        meshlets.build = real
+    assert calls == [12, 12]  # the builder saw each small shell, not only big ones
+    assert sorted(len(x) for x in pieces) == [12, 12]

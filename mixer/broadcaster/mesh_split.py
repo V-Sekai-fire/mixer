@@ -7,9 +7,10 @@ No `bpy`, no numpy: lists of points and (a, b, c) index triples.
 The rule follows what the project already does with models:
   1. shells (model_explode's explode.gd): triangles that share a vertex, vertices welded by position, are one shell; nothing
      is cut, so every piece edge is an edge the artist made;
-  2. small shells are packed together, largest first, into a piece that is still under the limit;
-  3. a shell over the limit is cut into meshlets by meshoptimizer (meshlets.py), consecutive meshlets packed into pieces;
-     no triangle is split or copied. Where the library is not built it is cut on a grid (godot-splerger's split by grid).
+  2. every shell, big or small, is cut into meshlets by meshoptimizer (meshlets.py) and consecutive meshlets are packed into
+     pieces of at most the limit; no triangle is split or copied;
+  3. where the library is not built: small shells are packed largest first, and a shell over the limit is cut on a grid
+     (godot-splerger's split by grid).
 
 `split(points, tris, max_tris)` returns lists of triangle indices: a partition of range(len(tris)), each at most `max_tris`,
 the same for the same input.
@@ -108,11 +109,25 @@ def split(points: Sequence[Point], tris: Sequence[Tri], max_tris: int) -> List[L
         raise ValueError("max_tris is at least 1")
     if len(tris) <= max_tris:
         return [list(range(len(tris)))] if tris else []
-    pieces: List[List[int]] = []
+    if max_tris >= 4 and _meshlets_ok():  # every shell, big or small, goes through meshoptimizer's meshlet builder
+        from mixer.broadcaster import meshlets
+
+        pieces: List[List[int]] = []
+        run: List[int] = []
+        for shell in shells(points, tris):  # consecutive meshlets, shell by shell, packed into pieces
+            for m in meshlets.build(points, tris, shell, max_tris):
+                if run and len(run) + len(m) > max_tris:
+                    pieces.append(run)
+                    run = []
+                run.extend(m)
+        if run:
+            pieces.append(run)
+        return pieces
+    pieces = []
     small: List[List[int]] = []
     for shell in shells(points, tris):
         if len(shell) > max_tris:
-            pieces.extend((meshlet_cut if max_tris >= 4 and _meshlets_ok() else grid_cut)(points, tris, shell, max_tris))
+            pieces.extend(grid_cut(points, tris, shell, max_tris))
         else:
             small.append(shell)
     bins: List[List[int]] = []
