@@ -112,7 +112,9 @@ def _mesh_pieces(ob_evaluated: Any, name: str, geometry_changed: bool) -> list:
             mesh.calc_loop_triangles()
             pts = [tuple(v.co) for v in mesh.vertices]
             tris = [tuple(t.vertices) for t in mesh.loop_triangles]
-            groups = mesh_split.split(pts, tris, MAX_TRIS) or [[]]
+            mw = ob_evaluated.matrix_world
+            world = [tuple(mw @ v.co) for v in mesh.vertices]  # explode.gd welds in world space
+            groups = mesh_split.split(pts, tris, MAX_TRIS, world) or [[]]
             made = []
             for k, ids in enumerate(groups):
                 p, t = (pts, tris) if len(groups) == 1 else mesh_split.piece(pts, tris, ids)

@@ -17,35 +17,76 @@ the same for the same input.
 """
 
 import math
-from typing import Dict, List, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 Point = Tuple[float, float, float]
 Tri = Tuple[int, int, int]
-WELD = 1e-5
 
 
-def shells(points: Sequence[Point], tris: Sequence[Tri]) -> List[List[int]]:
-    """Triangle indices grouped by shell, each shell in order, shells ordered by their first triangle."""
-    key = {}
-    weld = []
-    for p in points:
-        weld.append(key.setdefault((round(p[0] / WELD), round(p[1] / WELD), round(p[2] / WELD)), len(key)))
-    parent = list(range(len(key)))
+MIN_SHARE = 0.01  # explode.gd: a shell with at least this share of the triangles is a piece of its own
+WELD_SHARE = 1e-5  # explode.gd WELD: vertices closer than this share of the model's size are one vertex
+
+
+def _f32(x: float) -> float:
+    """The project's Godot is a double-precision build (precision=double), so its Vector3 holds doubles: identity."""
+    return x
+
+
+def _roundi(x: float) -> int:
+    """Godot's roundi: halves go away from zero (Python's round() goes to even)."""
+    return int(math.floor(x + 0.5)) if x >= 0 else -int(math.floor(-x + 0.5))
+
+
+def shells(points: Sequence[Point], tris: Sequence[Tri], world: Optional[Sequence[Point]] = None) -> List[List[int]]:
+    """The shells of explode.gd (_split_shells), ported rule for rule: a vertex's weld id is its world position over
+    q = max(diagonal of the model's world box x WELD, 1e-9), rounded with roundi, ids handed out in vertex order; the
+    three corners of every triangle are united (a-b, b-c; the smaller root wins); a shell is the triangles of one root.
+    `world` is the vertices in world space (else `points`). Triangle ids per shell, shells in order of their first
+    triangle."""
+    pos = world if world is not None else points
+    if not pos:
+        return []
+    lo = [min(p[k] for p in pos) for k in range(3)]
+    hi = [max(p[k] for p in pos) for k in range(3)]
+    diag = _f32(math.sqrt(sum((hi[k] - lo[k]) ** 2 for k in range(3))))
+    q = max(_f32(diag * WELD_SHARE), 1e-9)
+    weld: Dict[Tuple[int, int, int], int] = {}
+    vid: List[int] = []
+    for p in pos:
+        key = (_roundi(_f32(p[0]) / q), _roundi(_f32(p[1]) / q), _roundi(_f32(p[2]) / q))
+        if key not in weld:
+            weld[key] = len(weld)
+        vid.append(weld[key])
+    up: Dict[int, int] = {}
 
     def find(a: int) -> int:
-        while parent[a] != a:
-            parent[a] = parent[parent[a]]
-            a = parent[a]
-        return a
+        r = a
+        while r in up:
+            r = up[r]
+        while a in up:  # path compression
+            n = up[a]
+            up[a] = r
+            a = n
+        return r
+
+    def union(a: int, b: int) -> None:
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            up[max(ra, rb)] = min(ra, rb)
 
     for a, b, c in tris:
-        ra, rb, rc = find(weld[a]), find(weld[b]), find(weld[c])
-        parent[rb] = ra
-        parent[find(rc)] = ra
+        union(vid[a], vid[b])
+        union(vid[b], vid[c])
     groups: Dict[int, List[int]] = {}
     for i, (a, _, _) in enumerate(tris):
-        groups.setdefault(find(weld[a]), []).append(i)
-    return sorted(groups.values(), key=lambda g: g[0])
+        groups.setdefault(find(vid[a]), []).append(i)
+    return list(groups.values())  # dict order = the order of each shell's first triangle, as explode.gd emits them
+
+
+def is_piece(shell_size: int, total: int) -> bool:
+    """explode.gd: a shell with at least MIN_SHARE of the triangles (and at least one) is a piece of its own; the rest
+    are the small shells that travel together."""
+    return float(shell_size) >= max(1.0, MIN_SHARE * float(total))
 
 
 def _centre(points: Sequence[Point], t: Tri) -> Point:
@@ -104,7 +145,7 @@ def _meshlets_ok() -> bool:
     return meshlets.available()
 
 
-def split(points: Sequence[Point], tris: Sequence[Tri], max_tris: int) -> List[List[int]]:
+def split(points: Sequence[Point], tris: Sequence[Tri], max_tris: int, world: Optional[Sequence[Point]] = None) -> List[List[int]]:
     if max_tris < 1:
         raise ValueError("max_tris is at least 1")
     if len(tris) <= max_tris:
@@ -114,7 +155,9 @@ def split(points: Sequence[Point], tris: Sequence[Tri], max_tris: int) -> List[L
 
         pieces: List[List[int]] = []
         run: List[int] = []
-        for shell in shells(points, tris):  # consecutive meshlets, shell by shell, packed into pieces
+        found = shells(points, tris, world)  # explode.gd's pieces first, then its small shells that travel together
+        ordered = [x for x in found if is_piece(len(x), len(tris))] + [x for x in found if not is_piece(len(x), len(tris))]
+        for shell in ordered:  # consecutive meshlets, shell by shell, packed into pieces
             for m in meshlets.build(points, tris, shell, max_tris):
                 if run and len(run) + len(m) > max_tris:
                     pieces.append(run)
@@ -125,7 +168,7 @@ def split(points: Sequence[Point], tris: Sequence[Tri], max_tris: int) -> List[L
         return pieces
     pieces = []
     small: List[List[int]] = []
-    for shell in shells(points, tris):
+    for shell in shells(points, tris, world):
         if len(shell) > max_tris:
             pieces.extend(grid_cut(points, tris, shell, max_tris))
         else:
