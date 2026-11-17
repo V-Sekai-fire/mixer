@@ -26,6 +26,7 @@ from mathutils import Vector
 
 from mixer.broadcaster import common
 from mixer.blender_client import material as material_api
+from mixer.blender_data.bl_compat import float_layers
 
 logger = logging.getLogger(__name__)
 
@@ -127,6 +128,15 @@ def encode_bmesh_layer(layer_collection, element_seq, extract_layer_tuple_func):
     return binary_buffer
 
 
+def _color_layers(mesh):
+    """(name, active for render) of each colour layer: `vertex_colors` before Blender 5, `color_attributes` since."""
+    layers = getattr(mesh, "vertex_colors", None)
+    if layers is not None:
+        return [(layer.name, layer.active_render) for layer in layers]
+    render = mesh.color_attributes.render_color_index
+    return [(attr.name, i == render) for i, attr in enumerate(mesh.color_attributes)]
+
+
 # We cannot iterate directly over bm.loops, so we use a generator
 def loops_iterator(bm):
     for face in bm.faces:
@@ -161,8 +171,11 @@ def encode_baked_mesh(obj):
     bm.free()
 
     # Calculate normals, necessary if auto-smooth option enabled
-    mesh.calc_normals()
-    mesh.calc_normals_split()
+    # (Blender 4.0 and 4.1 removed both: normals are always up to date)
+    if hasattr(mesh, "calc_normals"):
+        mesh.calc_normals()
+    if hasattr(mesh, "calc_normals_split"):
+        mesh.calc_normals_split()
     # calc_loop_triangles resets normals so... don't use it
 
     # get active uv layer
@@ -253,7 +266,9 @@ def encode_base_mesh_geometry(mesh_data):
     # Other ignored layers:
     # - shape: shape keys are handled with Shape Keys at the mesh and object level
     # - float, int, string: don't really know their role
-    binary_buffer += encode_bmesh_layer(bm.verts.layers.bevel_weight, bm.verts, extract_layer_float)
+    binary_buffer += encode_bmesh_layer(
+        float_layers(bm.verts, "bevel_weight", "bevel_weight_vert"), bm.verts, extract_layer_float
+    )
 
     logger.debug("Writing %d edges", len(bm.edges))
     bm.edges.ensure_lookup_table()
@@ -269,8 +284,10 @@ def encode_base_mesh_geometry(mesh_data):
     # Other ignored layers:
     # - freestyle: of type NotImplementedType, maybe reserved for future dev
     # - float, int, string: don't really know their role
-    binary_buffer += encode_bmesh_layer(bm.edges.layers.bevel_weight, bm.edges, extract_layer_float)
-    binary_buffer += encode_bmesh_layer(bm.edges.layers.crease, bm.edges, extract_layer_float)
+    binary_buffer += encode_bmesh_layer(
+        float_layers(bm.edges, "bevel_weight", "bevel_weight_edge"), bm.edges, extract_layer_float
+    )
+    binary_buffer += encode_bmesh_layer(float_layers(bm.edges, "crease", "crease_edge"), bm.edges, extract_layer_float)
 
     logger.debug("Writing %d faces", len(bm.faces))
     bm.faces.ensure_lookup_table()
@@ -287,7 +304,10 @@ def encode_base_mesh_geometry(mesh_data):
     # Other ignored layers:
     # - freestyle: of type NotImplementedType, maybe reserved for future dev
     # - float, int, string: don't really know their role
-    binary_buffer += encode_bmesh_layer(bm.faces.layers.face_map, bm.faces, extract_layer_int)
+    if hasattr(bm.faces.layers, "face_map"):
+        binary_buffer += encode_bmesh_layer(bm.faces.layers.face_map, bm.faces, extract_layer_int)
+    else:  # Blender 4.1 removed face maps: send no layer
+        binary_buffer += struct.pack("1I", 0)
 
     # Loops layers
     # A loop is an edge attached to a face (so each edge of a manifold can have 2 loops at most).
@@ -365,12 +385,14 @@ def encode_base_mesh(obj):
             binary_buffer += common.encode_float(vg_elmt[1])
 
     # Normals
-    binary_buffer += common.encode_bool(mesh_data.use_auto_smooth)
-    binary_buffer += common.encode_float(mesh_data.auto_smooth_angle)
+    # Blender 4.1 replaced auto smooth with the Smooth by Angle modifier: the wire still carries the two values
+    binary_buffer += common.encode_bool(getattr(mesh_data, "use_auto_smooth", False))
+    binary_buffer += common.encode_float(getattr(mesh_data, "auto_smooth_angle", 0.5235987755982988))
     binary_buffer += common.encode_bool(mesh_data.has_custom_normals)
 
     if mesh_data.has_custom_normals:
-        mesh_data.calc_normals_split()  # Required otherwise all normals are (0, 0, 0)
+        if hasattr(mesh_data, "calc_normals_split"):
+            mesh_data.calc_normals_split()  # Required otherwise all normals are (0, 0, 0)
         normals = []
         for loop in mesh_data.loops:
             normals.extend((*loop.normal,))
@@ -382,9 +404,9 @@ def encode_base_mesh(obj):
         binary_buffer += common.encode_bool(uv_layer.active_render)
 
     # Vertex Colors
-    for vertex_colors in mesh_data.vertex_colors:
-        binary_buffer += common.encode_string(vertex_colors.name)
-        binary_buffer += common.encode_bool(vertex_colors.active_render)
+    for name, active_render in _color_layers(mesh_data):
+        binary_buffer += common.encode_string(name)
+        binary_buffer += common.encode_bool(active_render)
 
     if obj.type != "MESH":
         obj.to_mesh_clear()
@@ -477,7 +499,8 @@ def decode_baked_mesh(obj: Optional[bpy.types.Object], data, index):
 
         # hack ! Since bmesh cannot be used to set custom normals
         me.normals_split_custom_set(normals)
-        me.use_auto_smooth = True
+        if hasattr(me, "use_auto_smooth"):
+            me.use_auto_smooth = True
 
     return index
 
@@ -494,7 +517,9 @@ def decode_base_mesh(client, obj: bpy.types.Object, mesh: bpy.types.Mesh, data, 
 
     bm.verts.ensure_lookup_table()
 
-    index = decode_bmesh_layer(data, index, bm.verts.layers.bevel_weight, bm.verts, decode_layer_float)
+    index = decode_bmesh_layer(
+        data, index, float_layers(bm.verts, "bevel_weight", "bevel_weight_vert"), bm.verts, decode_layer_float
+    )
 
     edge_count, index = common.decode_int(data, index)
     logger.debug("Reading %d edges", edge_count)
@@ -509,8 +534,12 @@ def decode_base_mesh(client, obj: bpy.types.Object, mesh: bpy.types.Mesh, data, 
         edge.smooth = bool(edges_data[edge_idx * 4 + 2])
         edge.seam = bool(edges_data[edge_idx * 4 + 3])
 
-    index = decode_bmesh_layer(data, index, bm.edges.layers.bevel_weight, bm.edges, decode_layer_float)
-    index = decode_bmesh_layer(data, index, bm.edges.layers.crease, bm.edges, decode_layer_float)
+    index = decode_bmesh_layer(
+        data, index, float_layers(bm.edges, "bevel_weight", "bevel_weight_edge"), bm.edges, decode_layer_float
+    )
+    index = decode_bmesh_layer(
+        data, index, float_layers(bm.edges, "crease", "crease_edge"), bm.edges, decode_layer_float
+    )
 
     face_count, index = common.decode_int(data, index)
     logger.debug("Reading %d faces", face_count)
@@ -526,7 +555,11 @@ def decode_base_mesh(client, obj: bpy.types.Object, mesh: bpy.types.Mesh, data, 
         face.material_index = material_idx
         face.smooth = smooth
 
-    index = decode_bmesh_layer(data, index, bm.faces.layers.face_map, bm.faces, decode_layer_int)
+    if hasattr(bm.faces.layers, "face_map"):
+        index = decode_bmesh_layer(data, index, bm.faces.layers.face_map, bm.faces, decode_layer_int)
+    else:  # a peer on an older Blender may send face maps; this Blender has none, so read them past
+        layer_count, index = common.decode_int(data, index)
+        index += layer_count * len(bm.faces) * 4
 
     index = decode_bmesh_layer(data, index, bm.loops.layers.uv, loops_iterator(bm), decode_layer_uv)
     index = decode_bmesh_layer(data, index, bm.loops.layers.color, loops_iterator(bm), decode_layer_color)
@@ -576,8 +609,10 @@ def decode_base_mesh(client, obj: bpy.types.Object, mesh: bpy.types.Mesh, data, 
             vertex_group.add([vert_idx], weight, "REPLACE")
 
     # Normals
-    mesh.use_auto_smooth, index = common.decode_bool(data, index)
-    mesh.auto_smooth_angle, index = common.decode_float(data, index)
+    use_auto_smooth, index = common.decode_bool(data, index)
+    auto_smooth_angle, index = common.decode_float(data, index)
+    if hasattr(mesh, "use_auto_smooth"):  # not in Blender 4.1 and later
+        mesh.use_auto_smooth, mesh.auto_smooth_angle = use_auto_smooth, auto_smooth_angle
 
     has_custom_normal, index = common.decode_bool(data, index)
 
@@ -597,9 +632,14 @@ def decode_base_mesh(client, obj: bpy.types.Object, mesh: bpy.types.Mesh, data, 
         uv_layer.active_render, index = common.decode_bool(data, index)
 
     # Vertex Colors
-    for vertex_colors in mesh.vertex_colors:
-        vertex_colors.name, index = common.decode_string(data, index)
-        vertex_colors.active_render, index = common.decode_bool(data, index)
+    layers = getattr(mesh, "vertex_colors", None)
+    for layer in layers if layers is not None else mesh.color_attributes:
+        name, index = common.decode_string(data, index)
+        active_render, index = common.decode_bool(data, index)
+        if layers is not None:
+            layer.name, layer.active_render = name, active_render
+        elif layer.name != name and name not in mesh.attributes:
+            layer.name = name
 
     return index
 

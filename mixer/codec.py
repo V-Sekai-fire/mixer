@@ -85,21 +85,14 @@ def decode(command: common.Command) -> Message:
 
 
 def encode(message: Message) -> bytes:
-    # not tested, actually
-    raise NotImplementedError("encode")
+    """Encode a message. A class with its own `encode` method is used as is; otherwise its fields are written in order."""
+    if hasattr(message, "encode"):
+        return message.encode()
     buffer = b""
-    fields = ((f.name, f.type) for f in dataclasses.fields(message))
-    for (
-        name,
-        type_,
-    ) in fields:
-        if type_ not in codec_functions:
-            raise NotImplementedError(f"No codec_func for {type_}")
-        encode = codec_functions[type_][0]
-
-        attr = getattr(message, name)
-        # TODO need something smarter that multiple reallocations ?
-        buffer += encode(type_)(attr)
+    for f in dataclasses.fields(message):
+        if f.type not in codec_functions:
+            raise NotImplementedError(f"No codec_func for {f.type}")
+        buffer += codec_functions[f.type][0](getattr(message, f.name))
     return buffer
 
 

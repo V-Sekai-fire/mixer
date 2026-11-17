@@ -88,3 +88,41 @@ T = _Types()
 def is_available(t: Any) -> bool:
     """Return False for a placeholder standing for a type missing from this Blender."""
     return not (isinstance(t, type) and issubclass(t, Absent))
+
+
+class LegacyFloatLayers:
+    """
+    Stands in for `bm.<elements>.layers.bevel_weight` and `.crease`, which Blender 4.0 removed: those values are float
+    attributes now (`bevel_weight_vert`, `bevel_weight_edge`, `crease_edge`). It answers the few calls the mesh codec
+    makes on a layer collection: `len`, indexing, `is_singleton`, `new` and `verify`.
+    """
+
+    is_singleton = True
+
+    def __init__(self, float_layers, attribute: str):
+        self._float_layers = float_layers
+        self._attribute = attribute
+
+    def _layer(self):
+        return self._float_layers.get(self._attribute)
+
+    def __len__(self):
+        return 0 if self._layer() is None else 1
+
+    def __getitem__(self, index):
+        layer = self._layer()
+        if layer is None or index != 0:
+            raise IndexError(index)
+        return layer
+
+    def new(self):
+        return self._float_layers.new(self._attribute)
+
+    def verify(self):
+        return self._layer() or self._float_layers.new(self._attribute)
+
+
+def float_layers(elements, legacy: str, attribute: str):
+    """The layer collection for per element floats that older Blender kept under `layers.<legacy>`."""
+    layers = elements.layers
+    return getattr(layers, legacy) if hasattr(layers, legacy) else LegacyFloatLayers(layers.float, attribute)
