@@ -602,6 +602,10 @@ def main():
     global _log_server_updates
     args, args_parser = parse_cli_args()
     init_logging(args)
+    logger.warning(
+        "This Python server is deprecated: the broadcaster now lives in https://github.com/V-Sekai-fire/mixer-broadcaster "
+        "(Elixir, HTTP/3 WebTransport only). This TCP server will be removed once the add-on defaults to the relay."
+    )
     if args.latency > 0.0:
         logger.warning(f"Latency set to {args.latency} ms")
     if args.bandwidth > 0.0:
