@@ -3,16 +3,8 @@ SPDX-PackageName = "mixer"
 SPDX-PackageDownloadLocation = "https://github.com/V-Sekai-fire/mixer"
 
 # Most files carry a prose notice, not an SPDX tag, so REUSE reads them from here (generated from the notices
-# and the first commit of each file). Ubisoft's README: the mixer package is GPLv3, mixer.broadcaster is MIT.
-
-# The licence text of the repository.
-[[annotations]]
-path = [
-  "LICENSE",
-]
-precedence = "closest"
-SPDX-FileCopyrightText = "2007 Free Software Foundation, Inc."
-SPDX-License-Identifier = "GPL-3.0-only"
+# and the first commit of each file). Only licence texts count: a file notice here grants "version 2 of the License, or
+# (at your option) any later version" (GPL-2.0-or-later); the LICENSE file is the GPLv3 text (GPL-3.0-only). Ubisoft's README is not used.
 
 # A notice in the file names this licence; kept as written.
 [[annotations]]
@@ -104,9 +96,18 @@ path = [
 ]
 precedence = "closest"
 SPDX-FileCopyrightText = "2020 Ubisoft"
+SPDX-License-Identifier = "GPL-2.0-or-later"
+
+# The licence text of the repository.
+[[annotations]]
+path = [
+  "LICENSE",
+]
+precedence = "closest"
+SPDX-FileCopyrightText = "2007 Free Software Foundation, Inc."
 SPDX-License-Identifier = "GPL-3.0-only"
 
-# No notice in the file and its first commit is not ours: the repository licence (GPLv3) applies.
+# No notice in the file and its first commit is not ours: the text of the repository's LICENSE file (GPLv3) applies.
 [[annotations]]
 path = [
   ".flake8",
