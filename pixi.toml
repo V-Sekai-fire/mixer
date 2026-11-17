@@ -10,6 +10,7 @@ hypothesis = ">=6.100"
 pytest = "*"
 prek = "*"
 black = "*"
+mypy = ">=2.4.1,<3"
 
 [pypi-dependencies]
 # HTTP/3 + WebTransport (BSD-3-Clause). The only network protocol Mixer speaks.
@@ -20,6 +21,8 @@ zstandard = ">=0.25.0, <0.26"
 # Hypothesis is the only test framework; pytest is merely the runner Hypothesis ships a plugin for.
 test = "python -m pytest tests/hypo -p no:cacheprovider -x -q"
 lint = "prek run --all-files"
+# Type hints are required in the modules listed under [tool.mypy] in pyproject.toml.
+typecheck = "mypy"
 frontier = "python -m pytest tests/hypo/test_frontier.py -p no:cacheprovider -q -s"
 
 # Blender as the `bpy` PyPI module (needs Python 3.13): a separate backend/platform from the Blender executable,

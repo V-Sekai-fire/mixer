@@ -30,12 +30,13 @@ import hashlib
 import json
 import time
 import urllib.request
-from typing import Awaitable, Callable, Dict, List, Optional, Tuple
+from typing import Any, AsyncContextManager, Awaitable, Callable, Dict, List, Optional, Tuple, cast
 
 from aioquic.asyncio import QuicConnectionProtocol, connect
 from aioquic.h3.connection import H3_ALPN, H3Connection
 from aioquic.h3.events import DatagramReceived, HeadersReceived, WebTransportStreamDataReceived
 from aioquic.quic.configuration import QuicConfiguration
+from aioquic.quic.events import QuicEvent
 
 from . import entity, s3
 
@@ -66,7 +67,7 @@ class S3Store:
 
 
 class RelayClient(QuicConnectionProtocol):
-    def __init__(self, *a, **k) -> None:
+    def __init__(self, *a: Any, **k: Any) -> None:
         super().__init__(*a, **k)
         self.h3 = H3Connection(self._quic, enable_webtransport=True)
         self.session: Optional[int] = None
@@ -83,7 +84,7 @@ class RelayClient(QuicConnectionProtocol):
 
     # ---- events ----
 
-    def quic_event_received(self, event) -> None:
+    def quic_event_received(self, event: QuicEvent) -> None:
         for e in self.h3.handle_event(event):
             if isinstance(e, HeadersReceived) and dict(e.headers).get(b":status") == b"200" and not self._ready.done():
                 self._ready.set_result(e.stream_id)
@@ -107,14 +108,20 @@ class RelayClient(QuicConnectionProtocol):
 
     # ---- the door ----
 
-    async def _ask(self, obj: dict) -> Optional[dict]:
-        sid = self.h3.create_webtransport_stream(self.session)
+    def _session(self) -> int:
+        if self.session is None:
+            raise ConnectionError("the WebTransport session is not open yet")
+        return self.session
+
+    async def _ask(self, obj: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        sid = self.h3.create_webtransport_stream(self._session())
         self._quic.send_stream_data(sid, json.dumps(obj).encode(), end_stream=True)
         self.transmit()
         for _ in range(200):
             await asyncio.sleep(0.05)
             if sid in self._replies:
-                return json.loads(self._replies[sid])
+                reply: Dict[str, Any] = json.loads(self._replies[sid])
+                return reply
         return None
 
     async def login(self, token: bytes, pub: bytes, sign: Callable[[bytes], bytes]) -> None:
@@ -136,7 +143,7 @@ class RelayClient(QuicConnectionProtocol):
     def send_command(self, command_type: int, data: bytes) -> None:
         """One Mixer command as a packet. Data over 77 bytes goes to the chunk store first."""
         if self._packet_stream is None:
-            self._packet_stream = self.h3.create_webtransport_stream(self.session)
+            self._packet_stream = self.h3.create_webtransport_stream(self._session())
         raw = entity.pack_command(command_type, data, self.owner, self.store.put, self._hlc())
         self._quic.send_stream_data(self._packet_stream, raw)
         self.transmit()
@@ -144,7 +151,7 @@ class RelayClient(QuicConnectionProtocol):
     def send_pose(self, packet: bytes) -> None:
         if len(packet) != entity.PACKET_SIZE:
             raise ValueError("a pose is one 100-byte packet")
-        self.h3.send_datagram(self.session, packet)
+        self.h3.send_datagram(self._session(), packet)
         self.transmit()
 
     async def next_command(self, timeout: float = 5.0) -> Tuple[int, int, bytes]:
@@ -163,11 +170,12 @@ class open_relay:
         c.load_verify_locations(cafile)
         c.server_name = server_name
         self._config = c
-        self._ctx = None
+        self._ctx: Optional[AsyncContextManager[QuicConnectionProtocol]] = None
 
     async def __aenter__(self) -> RelayClient:
         self._ctx = connect(self.host, self.port, configuration=self._config, create_protocol=RelayClient)
-        client = await self._ctx.__aenter__()
+        ctx = self._ctx
+        client = cast(RelayClient, await ctx.__aenter__())
         await client.wait_connected()
         sid = client._quic.get_next_available_stream_id()
         client.h3.send_headers(
@@ -185,5 +193,6 @@ class open_relay:
         client.session = await asyncio.wait_for(client._ready, 8)
         return client
 
-    async def __aexit__(self, *exc) -> None:
-        await self._ctx.__aexit__(*exc)
+    async def __aexit__(self, *exc: Any) -> None:
+        if self._ctx is not None:
+            await self._ctx.__aexit__(*exc)

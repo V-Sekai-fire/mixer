@@ -12,7 +12,7 @@ import logging
 import os
 import time
 import zlib
-from typing import Dict
+from typing import Any, Dict
 
 import bpy
 
@@ -49,7 +49,7 @@ def _active() -> bool:
     )
 
 
-def _mesh_digest(ob_evaluated, name: str, geometry_changed: bool) -> bytes:
+def _mesh_digest(ob_evaluated: Any, name: str, geometry_changed: bool) -> bytes:
     """Publish the object's mesh (local space, as USD through desync) when it changed; else the last digest."""
     desync, filer = os.environ.get("MB_DESYNC"), os.environ.get("MB_S3")
     if not (desync and filer) or ob_evaluated.type != "MESH":
@@ -68,7 +68,7 @@ def _mesh_digest(ob_evaluated, name: str, geometry_changed: bool) -> bytes:
     return _digests.get(name, bytes(entity.DIGEST_LEN))
 
 
-def send_pose(ob_evaluated, name: str, geometry_changed: bool = False) -> None:
+def send_pose(ob_evaluated: Any, name: str, geometry_changed: bool = False) -> None:
     loc, quat, scale = ob_evaluated.matrix_world.decompose()
     gid = gid_of(name)
     digest = _mesh_digest(ob_evaluated, name, geometry_changed)
@@ -77,7 +77,7 @@ def send_pose(ob_evaluated, name: str, geometry_changed: bool = False) -> None:
     share_data.client.add_command(common.Command(MessageType.ENTITY_STATE, pose.pack()))
 
 
-def on_depsgraph(depsgraph) -> None:
+def on_depsgraph(depsgraph: Any) -> None:
     """Called from the add-on's depsgraph handler with the updates Blender reports."""
     if not _active() or share_data.client.skip_next_depsgraph_update:
         return

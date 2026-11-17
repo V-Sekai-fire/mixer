@@ -27,7 +27,9 @@ Negative scale (a mirror) is not representable; a mirror needs a mesh of its own
 
 import hashlib
 import math
-from typing import Tuple
+from typing import Sequence, Tuple
+
+Quat = Tuple[float, float, float, float]  # (x, y, z, w)
 
 PAYLOAD_LEN = 36
 DIGEST_LEN = 32
@@ -60,7 +62,7 @@ def pack_payload(digest: bytes, scale: Tuple[float, float, float] = (1.0, 1.0, 1
     return digest + encode_scale(*scale)
 
 
-def unpack_payload(payload: bytes):
+def unpack_payload(payload: bytes) -> Tuple[bytes, Tuple[float, float, float]]:
     if len(payload) != PAYLOAD_LEN:
         raise ValueError("an entity payload is 36 bytes")
     return payload[:DIGEST_LEN], decode_scale(payload[DIGEST_LEN:])
@@ -69,7 +71,7 @@ def unpack_payload(payload: bytes):
 # ---- rotation: swing-twist codes, as SWING_TWIST.md (q = swing * twist, twist about +Y) ----
 
 
-def qmul(a, b):  # Hamilton product; applies b first, as Godot's a * b
+def qmul(a: Quat, b: Quat) -> Quat:  # Hamilton product; applies b first, as Godot's a * b
     ax, ay, az, aw = a
     bx, by, bz, bw = b
     return (
@@ -80,16 +82,16 @@ def qmul(a, b):  # Hamilton product; applies b first, as Godot's a * b
     )
 
 
-def swing_twist_codes(q):
+def swing_twist_codes(q: Sequence[float]) -> Tuple[int, int, int]:
     """(x, y, z, w) in the wire frame to (swing X, swing Z, twist) int16 codes."""
     n = math.sqrt(sum(c * c for c in q)) or 1.0
-    q = tuple(c / n for c in q)
-    x, y, z, w = q
+    x, y, z, w = (c / n for c in q)
+    qn: Quat = (x, y, z, w)
     tn = math.hypot(y, w)
-    tw = (0.0, y / tn, 0.0, w / tn) if tn > 1e-12 else (0.0, 0.0, 0.0, 1.0)
-    sw = qmul(q, (-tw[0], -tw[1], -tw[2], tw[3]))
+    tw: Quat = (0.0, y / tn, 0.0, w / tn) if tn > 1e-12 else (0.0, 0.0, 0.0, 1.0)
+    sw = qmul(qn, (-tw[0], -tw[1], -tw[2], tw[3]))
     if sw[3] < 0 or (sw[3] == 0 and (sw[0] < 0 or (sw[0] == 0 and sw[2] < 0))):
-        sw = tuple(-c for c in sw)
+        sw = (-sw[0], -sw[1], -sw[2], -sw[3])
     ang = 2 * math.acos(max(-1.0, min(1.0, sw[3])))
     s = math.sin(ang / 2)
     vx, vz = (ang * sw[0] / s, ang * sw[2] / s) if s > 1e-12 else (0.0, 0.0)
@@ -99,7 +101,7 @@ def swing_twist_codes(q):
     return code(vx), code(vz), twist
 
 
-def quat_of_codes(cx: int, cz: int, twist: int):
+def quat_of_codes(cx: int, cz: int, twist: int) -> Quat:
     """The inverse: codes back to a unit quaternion (x, y, z, w)."""
     sx, sz = cx * math.pi / 32767, cz * math.pi / 32767
     a = math.hypot(sx, sz)
@@ -112,7 +114,7 @@ def quat_of_codes(cx: int, cz: int, twist: int):
     return qmul(swing, (0.0, math.sin(t / 2), 0.0, math.cos(t / 2)))
 
 
-def angle_between(q1, q2) -> float:
+def angle_between(q1: Sequence[float], q2: Sequence[float]) -> float:
     """Smallest rotation, in radians, that takes one unit quaternion to the other."""
     d = abs(sum(a * b for a, b in zip(q1, q2)))
     return 2 * math.acos(max(-1.0, min(1.0, d)))
@@ -170,7 +172,7 @@ class Entity:
             raise ValueError("the reserved bytes of an entity packet are zero")
         return cls(f[0], tuple(f[1:4]), tuple(f[4:7]), tuple(f[7:10]), f[10], f[11], f[12], tuple(f[13:16]), f[16])
 
-    def mesh(self):
+    def mesh(self) -> Tuple[bytes, Tuple[float, float, float]]:
         """(digest of the mesh's desync index, scale) from the payload."""
         return unpack_payload(self.payload)
 
@@ -194,7 +196,13 @@ def to_wire_quat(w: float, x: float, y: float, z: float) -> Tuple[float, float, 
 
 
 def pose_entity(
-    gid: int, loc, quat_wxyz, scale, hlc: int, owner: int = 1, digest: bytes = bytes(DIGEST_LEN)
+    gid: int,
+    loc: Sequence[float],
+    quat_wxyz: Sequence[float],
+    scale: Sequence[float],
+    hlc: int,
+    owner: int = 1,
+    digest: bytes = bytes(DIGEST_LEN),
 ) -> "Entity":
     """The packet for an object's world transform: position in micrometres, swing-twist rotation, scale and the digest of
     its mesh in the payload. `loc` is (x, y, z) in metres, `quat_wxyz` as Blender gives it."""
@@ -209,7 +217,7 @@ def pose_entity(
         hlc=hlc,
         class_owner=(CLASS_PROP << 24) | owner,
         rot=(cx, cz, tw),
-        payload=pack_payload(digest, tuple(abs(c) for c in scale)),
+        payload=pack_payload(digest, (abs(scale[0]), abs(scale[1]), abs(scale[2]))),
     )
 
 
