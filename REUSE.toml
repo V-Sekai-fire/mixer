@@ -14,6 +14,14 @@ precedence = "closest"
 SPDX-FileCopyrightText = "2020 Ubisoft"
 SPDX-License-Identifier = "MIT"
 
+# tools/ is ours (K. S. Ernest (iFire) Lee) and serves the broadcaster, so it goes under the same rule: a tool with no
+# entry of its own is MIT, with our copyright.
+[[annotations]]
+path = "tools/**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2026-present K. S. Ernest (iFire) Lee"
+SPDX-License-Identifier = "MIT"
+
 # A notice in the file names this licence; kept as written.
 [[annotations]]
 path = [
