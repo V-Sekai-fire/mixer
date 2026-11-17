@@ -12,15 +12,15 @@
  It was developed by the R&D department of Ubisoft Animation Studio.**
 
 <p align="center">
-  <a href="https://ubisoft-mixer.readthedocs.io" title="Consult the online documentation" target="_blank">
+  <a href="https://v-sekai-fire.github.io/mixer" title="Consult the online documentation" target="_blank">
   <img src="doc/images/Documentation.png" width="160" />
   </a>
   &nbsp;&nbsp;&nbsp;
-  <a href="https://github.com/ubisoft/mixer/releases/latest" title="Download latest version">
+  <a href="https://github.com/V-Sekai-fire/mixer/releases/latest" title="Download latest version">
   <img src="doc/images/Download.png" width="160" />
   </a>
   &nbsp;&nbsp;&nbsp;
-  <a href="https://github.com/ubisoft/mixer/issues" title="Report and follow issues">
+  <a href="https://github.com/V-Sekai-fire/mixer/issues" title="Report and follow issues">
   <img src="doc/images/Issues.png" width="160" />
   </a>
 </p>
@@ -42,15 +42,15 @@ Be aware that neither Ubisoft nor Ubisoft employees can be taken as responsible 
 
 ## Features
 
-Refer to the online documentation for details about current [features and limitations](https://ubisoft-mixer.readthedocs.io/en/latest/getting-started/features.html).
+Refer to the documentation for details about current [features and limitations](https://v-sekai-fire.github.io/mixer/getting-started/features.html).
 
 ## Documentation and Usage
 
-Documentation is available at the web site https://ubisoft-mixer.readthedocs.io/ to :
+Documentation is available at the web site https://v-sekai-fire.github.io/mixer/ to :
 
-- [download and install](https://ubisoft-mixer.readthedocs.io/en/latest/getting-started/install.html),
-- [test](https://ubisoft-mixer.readthedocs.io/en/latest/getting-started/first-steps.html) locally,
-- then [get connected](https://ubisoft-mixer.readthedocs.io/en/latest/collaborate/get-connected.html) and [work together](https://ubisoft-mixer.readthedocs.io/en/latest/collaborate/work-together.html)
+- [download and install](https://v-sekai-fire.github.io/mixer/getting-started/install.html),
+- [test](https://v-sekai-fire.github.io/mixer/getting-started/first-steps.html) locally,
+- then [get connected](https://v-sekai-fire.github.io/mixer/collaborate/get-connected.html) and [work together](https://v-sekai-fire.github.io/mixer/collaborate/work-together.html)
 
 ## Broadcaster
 
@@ -62,16 +62,15 @@ Mixer is archived, so this repository is not related to Ubisoft activities anymo
 
 ## Support
 
-The support repository is on the [Mixer Github repository](https://github.com/ubisoft/mixer) which is part of the [Ubisoft open source](https://github.com/ubisoft) projects group.
-Since the project is not maintained anymore submitted issues may not receive answers. We do appologize for the end of support.
+Support is on the [issue tracker](https://github.com/V-Sekai-fire/mixer/issues) of this repository, a fork of Ubisoft's archived [Mixer](https://github.com/ubisoft/mixer).
 
 ## Community
 
-The online documentation lists the [YouTube videos](https://ubisoft-mixer.readthedocs.io/en/latest/community/on_youtube.html) posted by community members.
+The online documentation lists the [YouTube videos](https://v-sekai-fire.github.io/mixer/community/on_youtube.html) posted by community members.
 
 ## Feedback and contribution
 
-Post your feedback and discuss your ideas with us on the [Mixer Blender chat](https://blender.chat/channel/mixer-addon).
+Post your feedback and discuss your ideas in the [issues](https://github.com/V-Sekai-fire/mixer/issues) of this repository.
 
 You can also get involved into the development of Mixer, discover how by reading these [contribution guidelines](doc/README.md).
 

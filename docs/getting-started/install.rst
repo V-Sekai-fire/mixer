@@ -14,7 +14,7 @@ The currently supported Blender version is 2.93.x. Blender 3.0 will be supported
 Download
 --------
 
-Open the `latest release <https://github.com/ubisoft/mixer/releases/latest>`__  page from the Mixer Gihub `releases page <https://github.com/ubisoft/mixer/releases>`_.
+Open the `latest release <https://github.com/V-Sekai-fire/mixer/releases/latest>`__  page from the Mixer Gihub `releases page <https://github.com/V-Sekai-fire/mixer/releases>`_.
 Download the zip file listed in **Assets** that has the package icon: |package-icon|.
 
 .. |package-icon| image:: /img/package-icon.png
